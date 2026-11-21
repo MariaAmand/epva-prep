@@ -1,0 +1,1957 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EPVA Prep - Estudo 100% IA & Offline</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts: Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <!-- PDF.js para leitura e extração real de texto offline -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+    <script>
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+    </script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    colors: {
+                        navy: {
+                            800: '#1b263b',
+                            900: '#0f172a',
+                            950: '#0a0f1d'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .perspective-1000 { perspective: 1000px; }
+        .transform-style-3d { transform-style: preserve-3d; }
+        .backface-hidden { backface-visibility: hidden; }
+        .rotate-y-180 { transform: rotateY(180deg); }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #f1f5f9; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    </style>
+</head>
+<body class="bg-slate-100 text-slate-800 font-sans min-h-screen">
+
+    <!-- Container de Notificações (Toast) -->
+    <div id="toast-container" class="fixed top-4 right-4 z-50 flex flex-col space-y-2 pointer-events-none"></div>
+
+    <!-- ========================================================= -->
+    <!-- TELA DE LOGIN (ALUNO & ACESSO MASTER)                     -->
+    <!-- ========================================================= -->
+    <div id="login-screen" class="min-h-screen bg-gradient-to-br from-navy-950 via-navy-900 to-navy-800 flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-md w-full p-7 md:p-8 shadow-2xl border border-slate-200 space-y-6">
+            <div class="text-center space-y-2">
+                <div class="w-14 h-14 bg-emerald-600 text-white rounded-2xl flex items-center justify-center mx-auto shadow-lg shadow-emerald-600/30 text-2xl">
+                    <i class="fa-solid fa-graduation-cap"></i>
+                </div>
+                <h1 class="text-2xl font-black text-navy-900 tracking-tight">EPVA Prep</h1>
+                <p class="text-xs text-slate-500 font-medium">Acesso exclusivo para alunos cadastrados e administração Master</p>
+            </div>
+
+            <form onsubmit="handleLoginSubmit(event)" class="space-y-4">
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-600 uppercase mb-1.5">Usuário / Login</label>
+                    <div class="relative">
+                        <i class="fa-solid fa-user text-slate-400 absolute left-3.5 top-3.5 text-xs"></i>
+                        <input type="text" id="login-username" required placeholder="Digite seu login" class="w-full border border-slate-300 rounded-xl py-2.5 pl-10 pr-3.5 text-sm font-medium focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-600 uppercase mb-1.5">Senha</label>
+                    <div class="relative">
+                        <i class="fa-solid fa-lock text-slate-400 absolute left-3.5 top-3.5 text-xs"></i>
+                        <input type="password" id="login-password" required placeholder="Digite sua senha" class="w-full border border-slate-300 rounded-xl py-2.5 pl-10 pr-3.5 text-sm font-medium focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                    </div>
+                </div>
+
+                <p id="login-error-msg" class="hidden text-xs font-bold text-red-600 bg-red-50 border border-red-200 p-3 rounded-xl"></p>
+
+                <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3.5 rounded-xl text-sm transition shadow-lg shadow-emerald-600/20 flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-right-to-bracket"></i>
+                    <span>Entrar no EPVA Prep</span>
+                </button>
+            </form>
+
+            <div class="pt-4 border-t border-slate-100 text-center space-y-1">
+                <p class="text-[11px] text-slate-400">Acesso Master padrão inicial: <span class="font-mono font-bold text-slate-600">master</span> / <span class="font-mono font-bold text-slate-600">epva2026</span></p>
+                <p class="text-[10px] text-slate-400">Altere sua senha Master após o primeiro acesso.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================================= -->
+    <!-- APLICAÇÃO PRINCIPAL (VISÍVEL APÓS LOGIN)                  -->
+    <!-- ========================================================= -->
+    <div id="app-shell" class="hidden min-h-screen flex flex-col md:flex-row">
+
+        <!-- Header Mobile -->
+        <header class="md:hidden bg-navy-900 text-white p-4 flex justify-between items-center sticky top-0 z-50 shadow-md">
+            <div class="flex items-center space-x-2.5">
+                <div class="bg-emerald-600 text-white p-2 rounded-xl shadow">
+                    <i class="fa-solid fa-graduation-cap text-base"></i>
+                </div>
+                <div>
+                    <span class="font-bold text-sm tracking-wide block leading-tight">EPVA Prep</span>
+                    <span id="mobile-user-badge" class="text-[10px] text-emerald-400 font-semibold">Aluno</span>
+                </div>
+            </div>
+            <div class="flex items-center gap-2">
+                <div class="text-xs bg-navy-950 border border-emerald-500/40 px-2.5 py-1.5 rounded-xl font-mono text-emerald-400 font-bold" id="countdown-mobile">
+                    -- dias
+                </div>
+                <button onclick="logoutUser()" class="bg-navy-800 hover:bg-red-900/60 text-slate-200 px-2.5 py-1.5 rounded-xl text-xs font-bold" title="Sair">
+                    <i class="fa-solid fa-right-from-bracket"></i>
+                </button>
+            </div>
+        </header>
+
+        <!-- Sidebar Lateral (Desktop) / Barra Inferior (Mobile) -->
+        <aside class="w-full md:w-64 bg-navy-900 text-slate-300 flex-shrink-0 flex flex-col justify-between md:min-h-screen fixed md:relative bottom-0 left-0 z-40 shadow-2xl border-t md:border-t-0 md:border-r border-slate-800">
+            <div>
+                <!-- Logo EPVA Prep -->
+                <div class="hidden md:flex items-center space-x-3.5 p-6 border-b border-slate-800/80">
+                    <div class="bg-emerald-600 text-white p-3 rounded-2xl shadow-lg shadow-emerald-600/20">
+                        <i class="fa-solid fa-graduation-cap text-2xl"></i>
+                    </div>
+                    <div>
+                        <h1 class="font-bold text-white text-lg leading-tight tracking-tight">EPVA Prep</h1>
+                        <p class="text-xs text-emerald-400 font-semibold mt-0.5">Estudo 100% IA & Offline</p>
+                    </div>
+                </div>
+
+                <!-- Usuário Logado -->
+                <div class="hidden md:flex items-center justify-between mx-4 mt-4 px-3.5 py-2.5 bg-navy-950/70 border border-slate-800 rounded-xl">
+                    <div class="truncate">
+                        <span class="text-[10px] uppercase tracking-wider text-slate-400 font-bold block" id="desktop-user-role">Conta Ativa</span>
+                        <span class="text-xs font-bold text-white truncate block" id="desktop-user-name">--</span>
+                    </div>
+                    <button onclick="logoutUser()" class="text-slate-400 hover:text-red-400 p-1.5 transition" title="Encerrar sessão">
+                        <i class="fa-solid fa-right-from-bracket text-sm"></i>
+                    </button>
+                </div>
+
+                <!-- Contagem Regressiva -->
+                <div class="hidden md:block mx-4 my-4 p-4 bg-navy-950/90 border border-slate-800 rounded-2xl text-center shadow-inner">
+                    <span class="text-[11px] text-slate-400 uppercase tracking-wider font-bold block mb-1">Contagem Regressiva</span>
+                    <div class="text-2xl font-black text-emerald-400 font-mono tracking-tight" id="countdown-desktop">-- dias</div>
+                    <div class="text-[11px] text-slate-400 mt-1 font-medium">Prova em 28/11/2026</div>
+                </div>
+
+                <!-- Menu de Navegação -->
+                <nav class="flex md:flex-col justify-around md:justify-start p-1.5 md:p-3 space-y-0 md:space-y-1.5">
+                    <button onclick="switchTab('pdf-ai')" id="nav-pdf-ai" class="nav-btn flex flex-col md:flex-row items-center md:space-x-3 px-2 py-2 md:py-3.5 rounded-xl w-full hover:bg-navy-800 hover:text-white text-[10px] md:text-sm font-semibold transition-all">
+                        <i class="fa-solid fa-file-pdf text-base md:text-lg"></i>
+                        <span class="mt-1 md:mt-0 text-center md:text-left">PDF & IA</span>
+                    </button>
+
+                    <button onclick="switchTab('dashboard')" id="nav-dashboard" class="nav-btn flex flex-col md:flex-row items-center md:space-x-3 px-2 py-2 md:py-3.5 rounded-xl w-full hover:bg-navy-800 hover:text-white text-[10px] md:text-sm font-semibold transition-all">
+                        <i class="fa-solid fa-wand-magic-sparkles text-base md:text-lg"></i>
+                        <span class="mt-1 md:mt-0 text-center md:text-left">Painel & Tema</span>
+                    </button>
+
+                    <button onclick="switchTab('flashcards')" id="nav-flashcards" class="nav-btn flex flex-col md:flex-row items-center md:space-x-3 px-2 py-2 md:py-3.5 rounded-xl w-full hover:bg-navy-800 hover:text-white text-[10px] md:text-sm font-semibold transition-all">
+                        <i class="fa-solid fa-clone text-base md:text-lg"></i>
+                        <span class="mt-1 md:mt-0 text-center md:text-left">Flashcards</span>
+                    </button>
+
+                    <button onclick="switchTab('quiz')" id="nav-quiz" class="nav-btn flex flex-col md:flex-row items-center md:space-x-3 px-2 py-2 md:py-3.5 rounded-xl w-full hover:bg-navy-800 hover:text-white text-[10px] md:text-sm font-semibold transition-all">
+                        <i class="fa-solid fa-list-check text-base md:text-lg"></i>
+                        <span class="mt-1 md:mt-0 text-center md:text-left">Simulados</span>
+                    </button>
+
+                    <button onclick="switchTab('master')" id="nav-master" class="nav-btn hidden flex-col md:flex-row items-center md:space-x-3 px-2 py-2 md:py-3.5 rounded-xl w-full hover:bg-navy-800 hover:text-white text-[10px] md:text-sm font-semibold transition-all">
+                        <i class="fa-solid fa-shield-halved text-base md:text-lg text-amber-400"></i>
+                        <span class="mt-1 md:mt-0 text-center md:text-left">Acesso Master</span>
+                    </button>
+                </nav>
+            </div>
+
+            <!-- Status Offline/Online & Configuração Opcional de Chave -->
+            <div class="hidden md:block p-4 border-t border-slate-800 text-xs text-slate-400 space-y-2.5">
+                <div class="flex justify-between items-center">
+                    <span>Status:</span>
+                    <span id="network-status" class="text-emerald-400 font-semibold flex items-center gap-1.5">
+                        <span class="w-2 h-2 rounded-full bg-emerald-400 inline-block"></span>Online (IA Ativa)
+                    </span>
+                </div>
+                <button onclick="openModal('modal-api-settings')" class="w-full py-2 px-3 rounded-xl bg-navy-800 hover:bg-slate-800 text-slate-300 text-[11px] font-semibold flex items-center justify-center gap-1.5 transition border border-slate-700">
+                    <i class="fa-solid fa-key text-emerald-400"></i>
+                    <span>Configurar Chave API</span>
+                </button>
+                <p class="text-[11px] text-slate-500 leading-relaxed">EPVA Prep • Conteúdos salvos localmente para estudo offline.</p>
+            </div>
+        </aside>
+
+        <!-- Conteúdo Principal -->
+        <main class="flex-1 overflow-y-auto pb-24 md:pb-8 p-4 md:p-8 max-w-6xl mx-auto w-full">
+
+            <!-- ========================================================= -->
+            <!-- ABA 1: UPLOAD PDF & GERAR AUTOMATICAMENTE COM IA          -->
+            <!-- ========================================================= -->
+            <section id="view-pdf-ai" class="tab-view space-y-6">
+                <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-5">
+                    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-100 pb-4">
+                        <div class="flex items-center space-x-3.5">
+                            <div class="bg-navy-900 text-emerald-400 p-3.5 rounded-2xl shadow-md">
+                                <i class="fa-solid fa-file-pdf text-2xl"></i>
+                            </div>
+                            <div>
+                                <h2 class="font-bold text-slate-900 text-lg md:text-xl">EPVA Prep • Upload de PDF & Geração com IA</h2>
+                                <p class="text-xs text-slate-500">Escolha a disciplina, o arquivo PDF, o intervalo de páginas e quantas questões a IA deve criar.</p>
+                            </div>
+                        </div>
+                        <button onclick="openModal('modal-api-settings')" class="md:hidden self-start bg-slate-100 text-slate-700 px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5">
+                            <i class="fa-solid fa-key text-emerald-600"></i> Chave API
+                        </button>
+                    </div>
+
+                    <!-- Linha 1: Disciplina, Arquivo PDF e Páginas -->
+                    <div class="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
+                        <div class="md:col-span-4">
+                            <label class="block text-[11px] font-bold text-slate-600 uppercase mb-1.5">1. Nome da Disciplina</label>
+                            <input type="text" id="pdf-discipline-input" placeholder="Ex: Controle Orçamentário e Tributário" class="w-full border border-slate-300 rounded-xl p-3 text-sm font-medium focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                        </div>
+
+                        <div class="md:col-span-5">
+                            <label class="block text-[11px] font-bold text-slate-600 uppercase mb-1.5">2. Selecione o Arquivo PDF</label>
+                            <input type="file" id="pdf-file-input" accept="application/pdf" onchange="handlePdfFileSelected(event)" class="w-full text-xs text-slate-600 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-navy-900 file:text-white hover:file:bg-navy-800 border border-slate-300 rounded-xl p-1.5 bg-slate-50 cursor-pointer">
+                        </div>
+
+                        <div class="md:col-span-3 grid grid-cols-2 gap-2">
+                            <div>
+                                <label class="block text-[11px] font-bold text-slate-600 uppercase mb-1.5">Pág. Início</label>
+                                <input type="number" id="pdf-page-start" min="1" value="1" class="w-full border border-slate-300 rounded-xl p-2.5 text-sm text-center font-mono font-bold">
+                            </div>
+                            <div>
+                                <label class="block text-[11px] font-bold text-slate-600 uppercase mb-1.5">Pág. Fim</label>
+                                <input type="number" id="pdf-page-end" min="1" value="15" class="w-full border border-slate-300 rounded-xl p-2.5 text-sm text-center font-mono font-bold">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Linha 2: Quantidade de Questões e Flashcards por Disciplina -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-slate-50 p-4 rounded-xl border border-slate-200/80">
+                        <div>
+                            <label for="pdf-quiz-qty" class="block text-[11px] font-bold text-navy-900 uppercase mb-1.5">
+                                <i class="fa-solid fa-list-check text-emerald-600 mr-1"></i>
+                                3. Quantidade de Questões para esta Disciplina (1 a 25)
+                            </label>
+                            <input type="number" id="pdf-quiz-qty" min="1" max="25" value="8" class="w-full border border-slate-300 rounded-xl p-2.5 text-sm font-mono font-bold bg-white focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                        </div>
+                        <div>
+                            <label for="pdf-fc-qty" class="block text-[11px] font-bold text-navy-900 uppercase mb-1.5">
+                                <i class="fa-solid fa-clone text-emerald-600 mr-1"></i>
+                                4. Quantidade de Flashcards para esta Disciplina (1 a 25)
+                            </label>
+                            <input type="number" id="pdf-fc-qty" min="1" max="25" value="10" class="w-full border border-slate-300 rounded-xl p-2.5 text-sm font-mono font-bold bg-white focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                        </div>
+                    </div>
+
+                    <!-- Barra de Status de Leitura e Botão Principal de IA -->
+                    <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 pt-1 bg-slate-50 p-4 rounded-xl border border-slate-200/80">
+                        <div class="text-xs text-slate-600 flex items-center space-x-2.5" id="pdf-read-status">
+                            <i class="fa-solid fa-circle-info text-slate-400 text-base"></i>
+                            <span>Selecione um arquivo PDF acima ou escolha uma apostila já salva na biblioteca abaixo.</span>
+                        </div>
+
+                        <button onclick="triggerAutoGenerateFromCurrentPdf()" id="btn-generate-pdf-ai" disabled class="bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-300 disabled:cursor-not-allowed text-white font-bold px-5 py-3 rounded-xl text-xs md:text-sm transition flex items-center justify-center space-x-2 shadow-md shadow-emerald-600/20 flex-shrink-0">
+                            <i class="fa-solid fa-wand-magic-sparkles"></i>
+                            <span>Gerar com IA</span>
+                        </button>
+                    </div>
+
+                    <!-- Barra de Progresso IA -->
+                    <div id="pdf-ai-progress-box" class="hidden p-4 bg-navy-900 text-white rounded-xl flex items-center justify-between gap-3 shadow-lg">
+                        <div class="flex items-center space-x-3">
+                            <i class="fa-solid fa-spinner fa-spin text-emerald-400 text-xl"></i>
+                            <div>
+                                <p class="text-xs md:text-sm font-bold" id="pdf-ai-progress-title">Lendo páginas do PDF e processando com Inteligência Artificial...</p>
+                                <p class="text-[11px] text-slate-300" id="pdf-ai-progress-sub">Gerando a quantidade de questões e flashcards solicitada para a disciplina.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Grid Inferior: Biblioteca Offline + Leitor Visual PDF.js -->
+                <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+                    <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm h-fit space-y-4">
+                        <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                            <h3 class="font-bold text-sm text-navy-900">PDFs Salvos Offline</h3>
+                            <span id="pdf-count-badge" class="bg-emerald-100 text-emerald-800 px-2.5 py-0.5 rounded-full text-xs font-bold">0</span>
+                        </div>
+                        <div id="pdf-library-list" class="space-y-2.5 max-h-[440px] overflow-y-auto">
+                            <p class="text-xs text-slate-400 text-center py-6">Nenhum PDF salvo ainda.<br>Envie um arquivo acima.</p>
+                        </div>
+                    </div>
+
+                    <div class="lg:col-span-3 bg-white rounded-2xl border border-slate-200 p-5 shadow-sm flex flex-col">
+                        <div id="pdf-viewer-toolbar" class="w-full flex flex-wrap justify-between items-center gap-3 mb-4 pb-3 border-b border-slate-100 hidden">
+                            <div class="flex items-center space-x-2">
+                                <button onclick="changePdfPage(-1)" class="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition">
+                                    <i class="fa-solid fa-chevron-left mr-1"></i> Anterior
+                                </button>
+                                <span class="text-xs text-slate-700 font-mono bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-200">
+                                    Pág. <span id="pdf-current-page" class="font-bold text-navy-900">0</span> / <span id="pdf-total-pages" class="font-bold">0</span>
+                                </span>
+                                <button onclick="changePdfPage(1)" class="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition">
+                                    Próxima <i class="fa-solid fa-chevron-right ml-1"></i>
+                                </button>
+                            </div>
+
+                            <div class="flex items-center space-x-2">
+                                <button onclick="zoomPdf(-0.2)" class="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold" title="Diminuir Zoom"><i class="fa-solid fa-magnifying-glass-minus"></i></button>
+                                <button onclick="zoomPdf(0.2)" class="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold" title="Aumentar Zoom"><i class="fa-solid fa-magnifying-glass-plus"></i></button>
+                            </div>
+                        </div>
+
+                        <div class="w-full flex justify-center items-start overflow-auto min-h-[450px] max-h-[640px] bg-slate-50 border border-dashed border-slate-200 rounded-xl p-4">
+                            <div id="pdf-placeholder" class="text-center my-auto p-8">
+                                <i class="fa-regular fa-file-pdf text-5xl text-slate-300 mb-3 block"></i>
+                                <p class="text-sm text-slate-700 font-bold">Leitor Offline de Apostilas • EPVA Prep</p>
+                                <p class="text-xs text-slate-400 mt-1 max-w-sm mx-auto">Ao selecionar um PDF, ele fica salvo no dispositivo para leitura sem internet e geração de questões sob medida.</p>
+                            </div>
+                            <canvas id="pdf-render-canvas" class="hidden shadow-lg rounded-lg border border-slate-200 max-w-full h-auto"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ========================================================= -->
+            <!-- ABA 2: PAINEL GERAL & GERADOR POR TEMA / TEXTO IA         -->
+            <!-- ========================================================= -->
+            <section id="view-dashboard" class="tab-view hidden space-y-6">
+                <div class="bg-gradient-to-r from-navy-900 to-navy-800 text-white rounded-2xl p-6 shadow-lg border border-slate-800 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                    <div>
+                        <h2 class="text-xl md:text-2xl font-bold tracking-tight">EPVA Prep • Rumo à Aprovação 2026</h2>
+                        <p class="text-slate-300 text-xs md:text-sm mt-1">Defina a quantidade exata de questões por disciplina e estude onde estiver.</p>
+                    </div>
+                    <div class="flex items-center space-x-2.5 bg-navy-950/90 px-4 py-2.5 rounded-xl border border-emerald-500/40">
+                        <i class="fa-solid fa-calendar-check text-emerald-400"></i>
+                        <span class="text-xs text-slate-200 font-bold" id="dashboard-countdown-text">Faltam -- dias para a prova!</span>
+                    </div>
+                </div>
+
+                <!-- Cards de Estatísticas -->
+                <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
+                        <div class="flex justify-between items-center text-slate-400 mb-2">
+                            <span class="text-[11px] font-bold uppercase tracking-wider">Questões Feitas</span>
+                            <i class="fa-solid fa-check-double text-emerald-600 text-lg"></i>
+                        </div>
+                        <div class="flex items-baseline space-x-2">
+                            <span class="text-3xl font-black text-navy-900" id="stat-attempted">0</span>
+                            <span class="text-xs text-slate-400 font-medium" id="stat-total-bank">de 0</span>
+                        </div>
+                    </div>
+
+                    <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
+                        <div class="flex justify-between items-center text-slate-400 mb-2">
+                            <span class="text-[11px] font-bold uppercase tracking-wider">Taxa de Acerto</span>
+                            <i class="fa-solid fa-bullseye text-emerald-600 text-lg"></i>
+                        </div>
+                        <span class="text-3xl font-black text-navy-900" id="stat-accuracy">0%</span>
+                    </div>
+
+                    <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
+                        <div class="flex justify-between items-center text-slate-400 mb-2">
+                            <span class="text-[11px] font-bold uppercase tracking-wider">Flashcards IA</span>
+                            <i class="fa-solid fa-clone text-navy-800 text-lg"></i>
+                        </div>
+                        <span class="text-3xl font-black text-navy-900" id="stat-flashcard-count">0</span>
+                    </div>
+
+                    <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
+                        <div class="flex justify-between items-center text-slate-400 mb-2">
+                            <span class="text-[11px] font-bold uppercase tracking-wider">Disciplinas</span>
+                            <i class="fa-solid fa-layer-group text-navy-800 text-lg"></i>
+                        </div>
+                        <span class="text-3xl font-black text-navy-900" id="stat-disciplines-count">0</span>
+                    </div>
+                </div>
+
+                <!-- Gerador Rápido por Tema ou Texto Colado -->
+                <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+                    <div class="flex items-center space-x-3 border-b border-slate-100 pb-4">
+                        <div class="bg-emerald-100 text-emerald-700 p-3 rounded-xl">
+                            <i class="fa-solid fa-robot text-xl"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-slate-900 text-base">Gerador por Tema ou Resumo (Quantidade Livre)</h3>
+                            <p class="text-xs text-slate-500">Informe a disciplina, o assunto ou resumo e digite quantas questões deseja gerar.</p>
+                        </div>
+                    </div>
+
+                    <form onsubmit="handleTopicAiGenerate(event)" class="space-y-4">
+                        <div class="grid grid-cols-1 md:grid-cols-12 gap-4">
+                            <div class="md:col-span-6">
+                                <label class="block text-[11px] font-bold text-slate-600 uppercase mb-1.5">Nome da Disciplina</label>
+                                <input type="text" id="topic-ai-discipline" required placeholder="Ex: Legislação Tributária ou Contabilidade Pública" class="w-full border border-slate-300 rounded-xl p-3 text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                            </div>
+                            <div class="md:col-span-3">
+                                <label for="topic-ai-qz-qty" class="block text-[11px] font-bold text-slate-600 uppercase mb-1.5">Qtd. Questões (1–25)</label>
+                                <input type="number" id="topic-ai-qz-qty" min="1" max="25" value="8" required class="w-full border border-slate-300 rounded-xl p-3 text-sm font-mono font-bold focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                            </div>
+                            <div class="md:col-span-3">
+                                <label for="topic-ai-fc-qty" class="block text-[11px] font-bold text-slate-600 uppercase mb-1.5">Qtd. Flashcards (1–25)</label>
+                                <input type="number" id="topic-ai-fc-qty" min="1" max="25" value="8" required class="w-full border border-slate-300 rounded-xl p-3 text-sm font-mono font-bold focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-[11px] font-bold text-slate-600 uppercase mb-1.5">Assunto do Edital ou Texto Base</label>
+                            <textarea id="topic-ai-prompt" required rows="3" placeholder="Ex: Princípios orçamentários, ciclo orçamentário, LDO, LOA e PPA, ou cole aqui o conteúdo da matéria..." class="w-full border border-slate-300 rounded-xl p-3 text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none"></textarea>
+                        </div>
+
+                        <button type="submit" id="btn-topic-ai" class="w-full md:w-auto bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3.5 px-6 rounded-xl text-xs md:text-sm transition flex items-center justify-center space-x-2 shadow-md shadow-emerald-600/20">
+                            <i class="fa-solid fa-wand-magic-sparkles"></i>
+                            <span>Gerar Questões e Flashcards com IA</span>
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Disciplinas Cadastradas no Banco -->
+                <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+                    <div class="flex flex-wrap justify-between items-center gap-2">
+                        <h3 class="font-bold text-slate-900 text-base">Disciplinas Disponíveis Offline</h3>
+                        <button onclick="resetDefaultData()" class="text-xs text-slate-400 hover:text-navy-900 font-semibold transition">
+                            <i class="fa-solid fa-rotate-left mr-1"></i>Restaurar Conteúdo Inicial
+                        </button>
+                    </div>
+                    <div id="dashboard-disciplines-list" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5"></div>
+                </div>
+            </section>
+
+            <!-- ========================================================= -->
+            <!-- ABA 3: FLASHCARDS INTERATIVOS 3D (GERADOS POR IA)         -->
+            <!-- ========================================================= -->
+            <section id="view-flashcards" class="tab-view hidden space-y-6">
+                <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                    <div>
+                        <h2 class="font-bold text-slate-900 text-xl tracking-tight">Flashcards • EPVA Prep</h2>
+                        <p class="text-xs text-slate-500 mt-0.5">Toque no cartão para girar e marque os conceitos já dominados</p>
+                    </div>
+
+                    <div class="flex flex-wrap items-center gap-2.5">
+                        <select id="fc-filter-discipline" onchange="filterFlashcards()" class="border border-slate-300 rounded-xl px-3.5 py-2.5 text-xs md:text-sm font-semibold text-slate-700 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                            <option value="ALL">Todas as Disciplinas</option>
+                        </select>
+
+                        <button onclick="switchTab('pdf-ai')" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-4 py-2.5 rounded-xl text-xs md:text-sm transition flex items-center space-x-2 shadow-md shadow-emerald-600/20">
+                            <i class="fa-solid fa-wand-magic-sparkles"></i>
+                            <span>Gerar Mais via PDF / IA</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="flex flex-col items-center justify-center max-w-xl mx-auto min-h-[400px]">
+                    <div id="flashcard-empty" class="hidden text-center bg-white p-8 rounded-2xl border border-slate-200 w-full shadow-sm">
+                        <i class="fa-solid fa-clone text-4xl text-slate-300 mb-3"></i>
+                        <p class="font-bold text-slate-700">Nenhum flashcard nesta seleção</p>
+                        <p class="text-xs text-slate-400 mt-1 mb-4">Envie um PDF ou digite um tema para a IA criar seus cartões automaticamente.</p>
+                        <button onclick="switchTab('pdf-ai')" class="bg-emerald-600 text-white px-5 py-2.5 rounded-xl text-xs font-bold shadow">Gerar Flashcards com IA</button>
+                    </div>
+
+                    <div id="flashcard-deck-active" class="w-full space-y-5">
+                        <div class="flex justify-between items-center bg-white px-4 py-2.5 rounded-xl border border-slate-200 text-xs">
+                            <span class="font-semibold text-slate-500">Cartões Dominados nesta seleção:</span>
+                            <span id="fc-mastered-badge" class="font-extrabold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200">0 / 0</span>
+                        </div>
+
+                        <div id="card-element" onclick="flipCard()" class="perspective-1000 w-full h-72 md:h-80 cursor-pointer select-none">
+                            <div id="card-inner" class="transform-style-3d transition-transform duration-500 w-full h-full relative rounded-2xl shadow-md border border-slate-200">
+                                <!-- Frente -->
+                                <div class="backface-hidden absolute inset-0 bg-white rounded-2xl p-6 md:p-8 flex flex-col justify-between">
+                                    <div class="flex justify-between items-center gap-2">
+                                        <span class="text-[10px] md:text-[11px] font-extrabold uppercase tracking-widest text-emerald-700 bg-emerald-50 border border-emerald-200 px-3 py-1 rounded-lg truncate" id="card-front-discipline">DISCIPLINA</span>
+                                        <span id="card-status-pill" class="text-[10px] font-bold px-2.5 py-1 rounded-lg bg-slate-100 text-slate-500 flex-shrink-0">Em Revisão</span>
+                                    </div>
+                                    <div class="my-auto text-center px-2 overflow-y-auto max-h-44">
+                                        <h3 class="text-lg md:text-xl font-bold text-navy-900 leading-snug" id="card-front-text">Pergunta...</h3>
+                                    </div>
+                                    <div class="flex justify-between items-center text-slate-400 text-xs font-mono pt-2 border-t border-slate-100">
+                                        <span><i class="fa-solid fa-rotate mr-1"></i>Toque para ver a resposta</span>
+                                        <button onclick="event.stopPropagation(); deleteCurrentFlashcard()" class="text-slate-300 hover:text-red-500 transition" title="Excluir cartão">
+                                            <i class="fa-solid fa-trash-can"></i>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- Verso -->
+                                <div class="backface-hidden rotate-y-180 absolute inset-0 bg-navy-900 text-white rounded-2xl p-6 md:p-8 flex flex-col justify-between border border-navy-800">
+                                    <div class="flex justify-between items-center">
+                                        <span class="text-[11px] font-extrabold uppercase tracking-widest text-emerald-400 bg-navy-800 px-3 py-1 rounded-lg">RESPOSTA IA</span>
+                                        <span class="text-xs text-slate-400 font-medium"><i class="fa-solid fa-rotate mr-1"></i>Voltar</span>
+                                    </div>
+                                    <div class="my-auto text-center px-2 overflow-y-auto max-h-48">
+                                        <p class="text-sm md:text-base text-slate-100 font-medium leading-relaxed" id="card-back-text">Resposta...</p>
+                                    </div>
+                                    <div class="flex justify-between items-center pt-2 border-t border-slate-800">
+                                        <span class="text-slate-400 text-xs font-mono">VERSO</span>
+                                        <button onclick="event.stopPropagation(); toggleMasteredCurrentCard()" id="btn-toggle-mastered" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold px-3 py-1.5 rounded-lg transition flex items-center gap-1.5">
+                                            <i class="fa-solid fa-check"></i><span>Marcar como Dominado</span>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="flex justify-between items-center bg-white p-3.5 rounded-2xl border border-slate-200 shadow-sm">
+                            <button onclick="navigateCard(-1)" class="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition flex items-center space-x-1.5">
+                                <i class="fa-solid fa-arrow-left"></i>
+                                <span>Anterior</span>
+                            </button>
+                            <span class="text-xs font-bold font-mono text-slate-600" id="card-counter">1 / 1</span>
+                            <button onclick="navigateCard(1)" class="px-4 py-2.5 rounded-xl bg-navy-900 hover:bg-navy-800 text-white text-xs font-bold transition flex items-center space-x-1.5">
+                                <span>Próximo</span>
+                                <i class="fa-solid fa-arrow-right"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ========================================================= -->
+            <!-- ABA 4: SIMULADOS DE MÚLTIPLA ESCOLHA (GERADOS POR IA)     -->
+            <!-- ========================================================= -->
+            <section id="view-quiz" class="tab-view hidden space-y-6">
+                <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                    <div>
+                        <h2 class="font-bold text-slate-900 text-xl tracking-tight">Simulados • EPVA Prep</h2>
+                        <p class="text-xs md:text-sm text-slate-500 mt-0.5">Pratique questões de múltipla escolha com gabarito comentado</p>
+                    </div>
+
+                    <div class="flex flex-wrap items-center gap-2.5">
+                        <select id="quiz-filter-discipline" onchange="startFilteredQuiz()" class="border border-slate-300 rounded-xl px-3.5 py-2.5 text-xs md:text-sm font-semibold text-slate-700 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                            <option value="ALL">Todas as Disciplinas</option>
+                        </select>
+
+                        <button onclick="switchTab('pdf-ai')" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-4 py-2.5 rounded-xl text-xs md:text-sm transition flex items-center space-x-2 shadow-md shadow-emerald-600/20">
+                            <i class="fa-solid fa-wand-magic-sparkles"></i>
+                            <span>Gerar Mais Questões</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="max-w-3xl mx-auto">
+                    <div id="quiz-empty-state" class="hidden text-center py-16 bg-white rounded-2xl border border-slate-200 p-8 shadow-sm">
+                        <i class="fa-solid fa-clipboard-question text-5xl text-slate-300 mb-4"></i>
+                        <h3 class="font-bold text-slate-800 text-lg">Nenhuma questão nesta disciplina</h3>
+                        <p class="text-xs text-slate-500 mt-1 mb-6">Faça upload de um PDF ou digite um tema para a IA criar questões automaticamente.</p>
+                        <button onclick="switchTab('pdf-ai')" class="bg-emerald-600 text-white px-5 py-2.5 rounded-xl text-xs font-bold shadow">Gerar Simulado com IA</button>
+                    </div>
+
+                    <div id="quiz-summary-card" class="hidden bg-white rounded-2xl border border-slate-200 p-8 shadow-sm text-center space-y-5">
+                        <div class="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto text-2xl">
+                            <i class="fa-solid fa-trophy"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-black text-navy-900">Simulado Concluído!</h3>
+                            <p class="text-xs text-slate-500 mt-1">Confira seu desempenho nesta rodada de estudos</p>
+                        </div>
+                        <div class="bg-slate-50 border border-slate-200 rounded-2xl p-5 max-w-xs mx-auto">
+                            <span class="text-3xl font-black text-emerald-600" id="session-score-text">0 / 0</span>
+                            <span class="block text-xs font-bold text-slate-500 mt-1" id="session-percent-text">0% de aproveitamento</span>
+                        </div>
+                        <div class="flex flex-wrap justify-center gap-3 pt-2">
+                            <button onclick="startFilteredQuiz()" class="bg-navy-900 hover:bg-navy-800 text-white px-6 py-3 rounded-xl text-xs font-bold shadow transition">
+                                Refazer Este Simulado
+                            </button>
+                            <button onclick="switchTab('pdf-ai')" class="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-3 rounded-xl text-xs font-bold shadow transition">
+                                Gerar Mais Questões com IA
+                            </button>
+                        </div>
+                    </div>
+
+                    <div id="quiz-active-card" class="bg-white rounded-2xl border border-slate-200 p-6 md:p-8 shadow-sm space-y-6">
+                        <div class="flex justify-between items-center border-b border-slate-100 pb-4 gap-2">
+                            <span class="text-[11px] font-extrabold uppercase tracking-widest text-emerald-700 bg-emerald-50 px-3 py-1.5 rounded-lg border border-emerald-200 truncate" id="quiz-discipline-tag">DISCIPLINA</span>
+                            <div class="flex items-center space-x-3 flex-shrink-0">
+                                <span class="text-xs font-semibold text-slate-400 font-mono" id="quiz-progress-text">Questão 1 de 1</span>
+                                <button onclick="deleteCurrentQuiz()" class="text-slate-300 hover:text-red-500 transition text-xs" title="Excluir questão">
+                                    <i class="fa-solid fa-trash-can"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <h3 class="text-base md:text-lg font-bold text-slate-900 leading-snug" id="quiz-question-text">
+                            Carregando questão...
+                        </h3>
+
+                        <div id="quiz-options-container" class="space-y-3"></div>
+                        <div id="quiz-feedback" class="hidden p-4 rounded-xl text-xs md:text-sm space-y-1.5"></div>
+
+                        <div class="pt-3 border-t border-slate-100">
+                            <button id="btn-submit-quiz" onclick="submitQuizAnswer()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-3.5 rounded-xl text-sm font-bold shadow-md shadow-emerald-600/20 transition">
+                                Responder Questão
+                            </button>
+                            <button id="btn-next-quiz" onclick="nextQuizQuestion()" class="w-full bg-navy-900 hover:bg-navy-800 text-white py-3.5 rounded-xl text-sm font-bold shadow-md transition hidden flex items-center justify-center space-x-2">
+                                <span>Próxima Questão</span>
+                                <i class="fa-solid fa-arrow-right text-xs"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ========================================================= -->
+            <!-- ABA 5: ACESSO MASTER (CONTROLE DE ALUNOS)                 -->
+            <!-- ========================================================= -->
+            <section id="view-master" class="tab-view hidden space-y-6">
+                <div class="bg-navy-900 text-white p-6 rounded-2xl border border-slate-800 shadow-lg flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                    <div class="flex items-center space-x-3.5">
+                        <div class="bg-amber-500/20 text-amber-400 p-3.5 rounded-2xl border border-amber-500/30">
+                            <i class="fa-solid fa-shield-halved text-2xl"></i>
+                        </div>
+                        <div>
+                            <h2 class="font-bold text-lg md:text-xl">Painel Master • EPVA Prep</h2>
+                            <p class="text-xs text-slate-300">Crie logins e senhas para os alunos, ative ou bloqueie acessos e gerencie sua senha Master.</p>
+                        </div>
+                    </div>
+                    <div class="flex flex-wrap gap-2">
+                        <button onclick="exportStudentsJson()" class="bg-navy-800 hover:bg-slate-800 text-slate-200 px-3.5 py-2 rounded-xl text-xs font-bold border border-slate-700 transition">
+                            <i class="fa-solid fa-download mr-1 text-emerald-400"></i>Exportar Lista
+                        </button>
+                        <label class="bg-navy-800 hover:bg-slate-800 text-slate-200 px-3.5 py-2 rounded-xl text-xs font-bold border border-slate-700 transition cursor-pointer">
+                            <i class="fa-solid fa-upload mr-1 text-emerald-400"></i>Importar Lista
+                            <input type="file" accept="application/json" onchange="importStudentsJson(event)" class="hidden">
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Cadastrar Novo Aluno -->
+                <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+                    <h3 class="font-bold text-navy-900 text-base border-b border-slate-100 pb-3">Cadastrar Novo Aluno</h3>
+                    <form onsubmit="handleAddStudent(event)" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
+                        <div>
+                            <label class="block text-[11px] font-bold text-slate-600 uppercase mb-1.5">Nome do Colega / Aluno</label>
+                            <input type="text" id="new-student-name" required placeholder="Ex: Lucas Almeida" class="w-full border border-slate-300 rounded-xl p-2.5 text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-bold text-slate-600 uppercase mb-1.5">Login de Acesso</label>
+                            <input type="text" id="new-student-user" required placeholder="Ex: lucas.epva" class="w-full border border-slate-300 rounded-xl p-2.5 text-sm font-mono focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-bold text-slate-600 uppercase mb-1.5">Senha do Aluno</label>
+                            <input type="text" id="new-student-pass" required placeholder="Ex: turma2026" class="w-full border border-slate-300 rounded-xl p-2.5 text-sm font-mono focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                        </div>
+                        <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 px-4 rounded-xl text-sm transition shadow-md shadow-emerald-600/20 flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-user-plus"></i>
+                            <span>Criar Acesso</span>
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Lista de Alunos Cadastrados -->
+                <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+                    <div class="flex justify-between items-center border-b border-slate-100 pb-3">
+                        <h3 class="font-bold text-navy-900 text-base">Alunos Cadastrados</h3>
+                        <span id="students-count-badge" class="bg-slate-100 text-slate-700 px-3 py-1 rounded-full text-xs font-bold">0 alunos</span>
+                    </div>
+                    <div id="students-list-container" class="space-y-2.5"></div>
+                </div>
+
+                <!-- Alterar Senha Master -->
+                <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+                    <h3 class="font-bold text-navy-900 text-base border-b border-slate-100 pb-3">Segurança • Alterar Senha Master</h3>
+                    <form onsubmit="handleChangeMasterPassword(event)" class="flex flex-col sm:flex-row gap-3 items-stretch sm:items-end max-w-lg">
+                        <div class="flex-1">
+                            <label class="block text-[11px] font-bold text-slate-600 uppercase mb-1.5">Nova Senha Master</label>
+                            <input type="password" id="new-master-password" required minlength="6" placeholder="Mínimo 6 caracteres" class="w-full border border-slate-300 rounded-xl p-2.5 text-sm font-mono focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                        </div>
+                        <button type="submit" class="bg-navy-900 hover:bg-navy-800 text-white font-bold px-5 py-2.5 rounded-xl text-sm transition">
+                            Salvar Nova Senha
+                        </button>
+                    </form>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- ========================================================= -->
+    <!-- MODAL OPCIONAL: CONFIGURAÇÃO DE CHAVE GEMINI API          -->
+    <!-- ========================================================= -->
+    <div id="modal-api-settings" class="fixed inset-0 bg-navy-950/75 z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200 space-y-4">
+            <div class="flex justify-between items-center border-b border-slate-100 pb-3">
+                <div class="flex items-center space-x-2">
+                    <i class="fa-solid fa-key text-emerald-600"></i>
+                    <h3 class="font-bold text-navy-900">Configuração da API Gemini</h3>
+                </div>
+                <button onclick="closeModal('modal-api-settings')" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <p class="text-xs text-slate-600 leading-relaxed">
+                Caso você rode o EPVA Prep fora de um ambiente com chave pré-injetada, informe aqui a chave API do Gemini para geração online com IA (ou utilize o modo offline automático).
+            </p>
+            <div>
+                <label class="block text-[11px] font-bold text-slate-700 uppercase mb-1">Chave API Gemini (Opcional)</label>
+                <input type="password" id="custom-gemini-key-input" placeholder="AIzaSy..." class="w-full border border-slate-300 rounded-xl p-2.5 text-sm font-mono focus:ring-2 focus:ring-emerald-500">
+            </div>
+            <div class="flex space-x-2 pt-2">
+                <button type="button" onclick="clearCustomApiKey()" class="w-1/2 bg-slate-100 hover:bg-slate-200 text-slate-700 py-2.5 rounded-xl text-xs font-bold">Limpar Chave</button>
+                <button type="button" onclick="saveCustomApiKey()" class="w-1/2 bg-emerald-600 hover:bg-emerald-700 text-white py-2.5 rounded-xl text-xs font-bold shadow">Salvar Chave</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        /* =====================================================================
+           CONFIGURAÇÃO GLOBAL & CONTEÚDO PRÉ-CARREGADO • EPVA PREP
+           ===================================================================== */
+        const EXAM_DATE = new Date('2026-11-28T08:00:00');
+        const ENV_API_KEY = "";
+
+        const DEFAULT_MASTER = {
+            username: "master",
+            passwordHash: "",
+            name: "Administrador Master"
+        };
+
+        const DEFAULT_FLASHCARDS = [
+            {
+                id: 1,
+                discipline: "CONTROLE ORÇAMENTÁRIO E TRIBUTÁRIO",
+                front: "Qual é o papel da Controladoria segundo Mosimann e Padoveze?",
+                back: "É a unidade administrativa responsável por coordenar a gestão econômica do sistema empresa por meio da Ciência Contábil e do Sistema de Informação de Controladoria.",
+                mastered: false
+            },
+            {
+                id: 2,
+                discipline: "CONTROLE ORÇAMENTÁRIO E TRIBUTÁRIO",
+                front: "O que analisa a Matriz SWOT (FOFA) no Planejamento Estratégico?",
+                back: "Ambiente Interno: Forças (Strengths) e Fraquezas (Weaknesses). Ambiente Externo: Oportunidades (Opportunities) e Ameaças (Threats).",
+                mastered: false
+            },
+            {
+                id: 3,
+                discipline: "CONTROLE ORÇAMENTÁRIO E TRIBUTÁRIO",
+                front: "Qual a diferença entre Orçamento de Tendência e Orçamento Base Zero (OBZ)?",
+                back: "O de Tendência projeta o futuro usando dados históricos passados. O Base Zero (OBZ) rompe com o passado e exige justificativa de todos os gastos a partir do zero.",
+                mastered: false
+            },
+            {
+                id: 4,
+                discipline: "CONTROLE ORÇAMENTÁRIO E TRIBUTÁRIO",
+                front: "Como diferenciar Orçamento Estático de Orçamento Flexível?",
+                back: "O Estático é fixado para um único volume de produção/vendas sem alterações. O Flexível admite uma faixa de níveis de atividade, ajustando-se à demanda.",
+                mastered: false
+            }
+        ];
+
+        const DEFAULT_QUIZZES = [
+            {
+                id: 101,
+                discipline: "CONTROLE ORÇAMENTÁRIO E TRIBUTÁRIO",
+                question: "A frase do Google 'Organizar as informações do mundo e torná-las mundialmente acessíveis e úteis' representa um exemplo de:",
+                options: ["Visão", "Valores", "Missão", "Objetivo Operacional"],
+                correct: 2,
+                explanation: "A Missão comunica interna e externamente o propósito fundamental da organização e do seu negócio."
+            },
+            {
+                id: 102,
+                discipline: "CONTROLE ORÇAMENTÁRIO E TRIBUTÁRIO",
+                question: "A empresa SQN elaborou seu orçamento estabelecendo volumes de vendas e produção a partir da evolução dos últimos 5 anos. Como se classifica esse orçamento?",
+                options: ["Orçamento Base Zero", "Orçamento de Tendência", "Orçamento Flexível", "Orçamento Corrigido"],
+                correct: 1,
+                explanation: "O Orçamento de Tendência utiliza dados históricos passados como base para projetar situações futuras."
+            },
+            {
+                id: 103,
+                discipline: "CONTROLE ORÇAMENTÁRIO E TRIBUTÁRIO",
+                question: "Uma empresa prevê vender 20.000 unidades em X2, deseja manter estoque final de 10% das vendas (2.000 un.) e possui estoque inicial de 1.900 unidades. Qual o Orçamento de Produção?",
+                options: ["20.000 unidades", "22.000 unidades", "20.100 unidades", "19.900 unidades"],
+                correct: 2,
+                explanation: "Produção = Vendas (20.000) + Estoque Final (2.000) - Estoque Inicial (1.900) = 20.100 unidades."
+            }
+        ];
+
+        let state = {
+            currentUser: null,
+            master: null,
+            students: [],
+            flashcards: [],
+            quizzes: [],
+            filteredFlashcards: [],
+            currentCardIdx: 0,
+            isFlipped: false,
+            activeQuizList: [],
+            currentQuizIdx: 0,
+            selectedOption: null,
+            sessionScore: 0,
+            stats: { attempted: 0, correct: 0 }
+        };
+
+        /* =====================================================================
+           CONTROLE DE ACESSO: LOGIN, SENHA MASTER E GESTÃO DE ALUNOS
+           ===================================================================== */
+        async function hashPassword(password) {
+            const encoder = new TextEncoder();
+            const data = encoder.encode(password);
+            const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+        }
+
+        async function initAuthData() {
+            const storedMaster = localStorage.getItem('epva_prep_master');
+            if (storedMaster) {
+                state.master = JSON.parse(storedMaster);
+            } else {
+                state.master = {
+                    username: DEFAULT_MASTER.username,
+                    passwordHash: await hashPassword("epva2026"),
+                    name: DEFAULT_MASTER.name
+                };
+                localStorage.setItem('epva_prep_master', JSON.stringify(state.master));
+            }
+
+            const storedStudents = localStorage.getItem('epva_prep_students');
+            state.students = storedStudents ? JSON.parse(storedStudents) : [];
+
+            const activeSession = sessionStorage.getItem('epva_prep_session');
+            if (activeSession) {
+                const sess = JSON.parse(activeSession);
+                if (sess.role === 'master' && sess.username === state.master.username) {
+                    state.currentUser = { username: state.master.username, name: state.master.name, role: 'master' };
+                } else if (sess.role === 'student') {
+                    const found = state.students.find(s => s.username === sess.username && s.active);
+                    if (found) {
+                        state.currentUser = { username: found.username, name: found.name, role: 'student' };
+                    }
+                }
+            }
+        }
+
+        function saveStudentsList() {
+            localStorage.setItem('epva_prep_students', JSON.stringify(state.students));
+            renderStudentsList();
+        }
+
+        async function handleLoginSubmit(e) {
+            e.preventDefault();
+            const username = document.getElementById('login-username').value.trim().toLowerCase();
+            const password = document.getElementById('login-password').value;
+            const errorEl = document.getElementById('login-error-msg');
+            errorEl.classList.add('hidden');
+
+            const inputHash = await hashPassword(password);
+
+            if (username === state.master.username.toLowerCase() && inputHash === state.master.passwordHash) {
+                state.currentUser = { username: state.master.username, name: state.master.name, role: 'master' };
+                sessionStorage.setItem('epva_prep_session', JSON.stringify(state.currentUser));
+                enterApp();
+                return;
+            }
+
+            const student = state.students.find(s => s.username.toLowerCase() === username);
+            if (student && student.passwordHash === inputHash) {
+                if (!student.active) {
+                    errorEl.textContent = "Seu acesso está bloqueado ou pendente de liberação com o Master.";
+                    errorEl.classList.remove('hidden');
+                    return;
+                }
+                state.currentUser = { username: student.username, name: student.name, role: 'student' };
+                sessionStorage.setItem('epva_prep_session', JSON.stringify(state.currentUser));
+                enterApp();
+                return;
+            }
+
+            errorEl.textContent = "Usuário ou senha inválidos.";
+            errorEl.classList.remove('hidden');
+        }
+
+        function logoutUser() {
+            state.currentUser = null;
+            sessionStorage.removeItem('epva_prep_session');
+            document.getElementById('app-shell').classList.add('hidden');
+            document.getElementById('login-screen').classList.remove('hidden');
+            document.getElementById('login-username').value = '';
+            document.getElementById('login-password').value = '';
+            document.getElementById('login-error-msg').classList.add('hidden');
+        }
+
+        async function enterApp() {
+            document.getElementById('login-screen').classList.add('hidden');
+            document.getElementById('app-shell').classList.remove('hidden');
+
+            const isMaster = state.currentUser.role === 'master';
+            document.getElementById('nav-master').classList.toggle('hidden', !isMaster);
+            document.getElementById('desktop-user-name').textContent = state.currentUser.name;
+            document.getElementById('desktop-user-role').textContent = isMaster ? "Acesso Master" : `Aluno • ${state.currentUser.username}`;
+            document.getElementById('mobile-user-badge').textContent = isMaster ? "Master" : state.currentUser.name;
+
+            await initIndexedDB();
+            loadLocalState();
+            updateCountdown();
+            updateNetworkStatus();
+            renderPdfLibrary();
+            renderStudentsList();
+            filterFlashcards();
+            startFilteredQuiz();
+            switchTab('pdf-ai');
+            showToast(`Bem-vindo(a) ao EPVA Prep, ${state.currentUser.name}!`);
+        }
+
+        async function handleAddStudent(e) {
+            e.preventDefault();
+            if (!state.currentUser || state.currentUser.role !== 'master') return;
+
+            const name = document.getElementById('new-student-name').value.trim();
+            const username = document.getElementById('new-student-user').value.trim().toLowerCase();
+            const rawPass = document.getElementById('new-student-pass').value;
+
+            if (username === state.master.username.toLowerCase() || state.students.some(s => s.username.toLowerCase() === username)) {
+                showToast("Esse login já está em uso.", "error");
+                return;
+            }
+
+            state.students.push({
+                id: Date.now(),
+                name,
+                username,
+                passwordHash: await hashPassword(rawPass),
+                active: true,
+                createdAt: new Date().toLocaleDateString('pt-BR')
+            });
+
+            saveStudentsList();
+            document.getElementById('new-student-name').value = '';
+            document.getElementById('new-student-user').value = '';
+            document.getElementById('new-student-pass').value = '';
+            showToast(`Acesso criado para ${name} (${username})!`);
+        }
+
+        function toggleStudentActive(id) {
+            if (!state.currentUser || state.currentUser.role !== 'master') return;
+            const student = state.students.find(s => s.id === id);
+            if (!student) return;
+            student.active = !student.active;
+            saveStudentsList();
+            showToast(student.active ? `Acesso de ${student.name} ativado.` : `Acesso de ${student.name} bloqueado.`);
+        }
+
+        async function resetStudentPassword(id) {
+            if (!state.currentUser || state.currentUser.role !== 'master') return;
+            const student = state.students.find(s => s.id === id);
+            if (!student) return;
+            const nextPass = prompt(`Digite a nova senha para ${student.name} (${student.username}):`);
+            if (!nextPass || nextPass.trim().length < 4) {
+                showToast("Senha cancelada ou muito curta.", "error");
+                return;
+            }
+            student.passwordHash = await hashPassword(nextPass.trim());
+            saveStudentsList();
+            showToast(`Senha de ${student.name} atualizada!`);
+        }
+
+        function deleteStudent(id) {
+            if (!state.currentUser || state.currentUser.role !== 'master') return;
+            state.students = state.students.filter(s => s.id !== id);
+            saveStudentsList();
+            showToast("Aluno removido da lista.");
+        }
+
+        async function handleChangeMasterPassword(e) {
+            e.preventDefault();
+            if (!state.currentUser || state.currentUser.role !== 'master') return;
+            const newPass = document.getElementById('new-master-password').value;
+            state.master.passwordHash = await hashPassword(newPass);
+            localStorage.setItem('epva_prep_master', JSON.stringify(state.master));
+            document.getElementById('new-master-password').value = '';
+            showToast("Senha Master alterada com sucesso!");
+        }
+
+        function renderStudentsList() {
+            const container = document.getElementById('students-list-container');
+            const badge = document.getElementById('students-count-badge');
+            badge.textContent = `${state.students.length} ${state.students.length === 1 ? 'aluno' : 'alunos'}`;
+
+            if (state.students.length === 0) {
+                container.innerHTML = '<p class="text-xs text-slate-400 text-center py-6">Nenhum aluno cadastrado ainda. Use o formulário acima para criar logins e senhas.</p>';
+                return;
+            }
+
+            container.innerHTML = '';
+            state.students.forEach(s => {
+                const row = document.createElement('div');
+                row.className = "p-3.5 rounded-xl border border-slate-200 bg-slate-50 flex flex-col sm:flex-row sm:items-center justify-between gap-3";
+                row.innerHTML = `
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <span class="text-sm font-bold text-navy-900">${s.name}</span>
+                            <span class="text-[10px] font-bold px-2 py-0.5 rounded-full ${s.active ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-700'}">
+                                ${s.active ? 'Ativo' : 'Bloqueado'}
+                            </span>
+                        </div>
+                        <span class="text-xs text-slate-500 font-mono">Login: <strong>${s.username}</strong> • Desde ${s.createdAt}</span>
+                    </div>
+                    <div class="flex flex-wrap gap-2">
+                        <button onclick="toggleStudentActive(${s.id})" class="px-3 py-1.5 rounded-lg text-xs font-bold border ${s.active ? 'bg-amber-50 text-amber-800 border-amber-200 hover:bg-amber-100' : 'bg-emerald-50 text-emerald-800 border-emerald-200 hover:bg-emerald-100'} transition">
+                            ${s.active ? 'Bloquear' : 'Liberar'}
+                        </button>
+                        <button onclick="resetStudentPassword(${s.id})" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-white text-slate-700 border border-slate-300 hover:bg-slate-100 transition">
+                            Trocar Senha
+                        </button>
+                        <button onclick="deleteStudent(${s.id})" class="px-2.5 py-1.5 rounded-lg text-xs font-bold text-slate-400 hover:text-red-600 transition" title="Excluir aluno">
+                            <i class="fa-solid fa-trash-can"></i>
+                        </button>
+                    </div>
+                `;
+                container.appendChild(row);
+            });
+        }
+
+        function exportStudentsJson() {
+            if (!state.currentUser || state.currentUser.role !== 'master') return;
+            const blob = new Blob([JSON.stringify(state.students, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'epva_prep_alunos.json';
+            a.click();
+            URL.revokeObjectURL(url);
+            showToast("Lista de alunos exportada.");
+        }
+
+        function importStudentsJson(e) {
+            if (!state.currentUser || state.currentUser.role !== 'master') return;
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (evt) => {
+                try {
+                    const imported = JSON.parse(evt.target.result);
+                    if (!Array.isArray(imported)) throw new Error("Formato inválido");
+                    state.students = imported;
+                    saveStudentsList();
+                    showToast("Lista de alunos importada com sucesso!");
+                } catch {
+                    showToast("Arquivo JSON inválido.", "error");
+                }
+            };
+            reader.readAsText(file);
+            e.target.value = '';
+        }
+
+        /* =====================================================================
+           STORAGE LOCAL (POR USUÁRIO PARA PROGRESSO E CONTEÚDOS)
+           ===================================================================== */
+        function getUserStorageKey(suffix) {
+            const userKey = state.currentUser ? state.currentUser.username : 'guest';
+            return `epva_prep_${userKey}_${suffix}`;
+        }
+
+        function loadLocalState() {
+            const fcRaw = localStorage.getItem(getUserStorageKey('flashcards'));
+            const qzRaw = localStorage.getItem(getUserStorageKey('quizzes'));
+            const stRaw = localStorage.getItem(getUserStorageKey('stats'));
+
+            if (!fcRaw || !qzRaw) {
+                state.flashcards = [...DEFAULT_FLASHCARDS];
+                state.quizzes = [...DEFAULT_QUIZZES];
+                state.stats = { attempted: 0, correct: 0 };
+                saveLocalState();
+            } else {
+                state.flashcards = JSON.parse(fcRaw);
+                state.quizzes = JSON.parse(qzRaw);
+                state.stats = stRaw ? JSON.parse(stRaw) : { attempted: 0, correct: 0 };
+            }
+        }
+
+        function saveLocalState() {
+            localStorage.setItem(getUserStorageKey('flashcards'), JSON.stringify(state.flashcards));
+            localStorage.setItem(getUserStorageKey('quizzes'), JSON.stringify(state.quizzes));
+            localStorage.setItem(getUserStorageKey('stats'), JSON.stringify(state.stats));
+            refreshDisciplineFilters();
+            updateDashboard();
+        }
+
+        function resetDefaultData() {
+            state.flashcards = [...DEFAULT_FLASHCARDS];
+            state.quizzes = [...DEFAULT_QUIZZES];
+            state.stats = { attempted: 0, correct: 0 };
+            saveLocalState();
+            filterFlashcards();
+            startFilteredQuiz();
+            showToast("Conteúdo inicial restaurado!");
+        }
+
+        function getActiveApiKey() {
+            const custom = localStorage.getItem('epva_prep_custom_gemini_key');
+            return (custom && custom.trim().length > 10) ? custom.trim() : ENV_API_KEY;
+        }
+
+        function saveCustomApiKey() {
+            const val = document.getElementById('custom-gemini-key-input').value.trim();
+            if (val) {
+                localStorage.setItem('epva_prep_custom_gemini_key', val);
+                showToast("Chave API Gemini salva neste navegador!");
+            }
+            closeModal('modal-api-settings');
+        }
+
+        function clearCustomApiKey() {
+            localStorage.removeItem('epva_prep_custom_gemini_key');
+            document.getElementById('custom-gemini-key-input').value = '';
+            showToast("Chave personalizada removida.");
+            closeModal('modal-api-settings');
+        }
+
+        /* =====================================================================
+           PIPELINE IA COM QUANTIDADE DE QUESTÕES ESCOLHIDA PELO ALUNO
+           ===================================================================== */
+        function sanitizeQuantity(rawValue, defaultVal = 8) {
+            const parsed = parseInt(rawValue, 10);
+            if (Number.isNaN(parsed)) return defaultVal;
+            return Math.min(25, Math.max(1, parsed));
+        }
+
+        async function fetchWithBackoff(url, payload, maxRetries = 3) {
+            let delay = 1000;
+            for (let attempt = 0; attempt <= maxRetries; attempt++) {
+                try {
+                    const response = await fetch(url, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                    return await response.json();
+                } catch (err) {
+                    if (attempt === maxRetries) throw err;
+                    await new Promise(res => setTimeout(res, delay));
+                    delay *= 2;
+                }
+            }
+        }
+
+        function generateOfflineContingency(discipline, text, fcCount, qzCount) {
+            const cleanSentences = text
+                .replace(/\s+/g, ' ')
+                .split(/[.!?]+/)
+                .map(s => s.trim())
+                .filter(s => s.length >= 40 && s.length <= 240);
+
+            const uniqueSentences = Array.from(new Set(cleanSentences));
+            const generatedCards = [];
+            const generatedQuizzes = [];
+
+            if (uniqueSentences.length === 0) {
+                return { flashcards: [], quizzes: [], mode: 'OFFLINE_CONTINGENCY' };
+            }
+
+            for (let i = 0; i < fcCount; i++) {
+                const sent = uniqueSentences[i % uniqueSentences.length];
+                const words = sent.split(' ');
+                const topicHint = words.slice(0, Math.min(5, words.length)).join(' ');
+                generatedCards.push({
+                    id: Date.now() + i,
+                    discipline,
+                    front: `Explique o ponto principal de ${discipline} sobre: "${topicHint}..."`,
+                    back: sent + ".",
+                    mastered: false
+                });
+            }
+
+            for (let i = 0; i < qzCount; i++) {
+                const target = uniqueSentences[i % uniqueSentences.length];
+                const distractors = uniqueSentences
+                    .filter((_, idx) => idx !== (i % uniqueSentences.length))
+                    .slice(0, 3)
+                    .map(d => d.slice(0, 95) + (d.length > 95 ? "..." : ""));
+
+                while (distractors.length < 3) {
+                    distractors.push("Nenhuma das alternativas anteriores corresponde ao conteúdo estudado.");
+                }
+
+                const correctText = target.slice(0, 95) + (target.length > 95 ? "..." : "");
+                const options = [...distractors];
+                const correctIdx = i % 4;
+                options.splice(correctIdx, 0, correctText);
+
+                generatedQuizzes.push({
+                    id: Date.now() + 5000 + i,
+                    discipline,
+                    question: `[Questão ${i + 1} de ${qzCount}] De acordo com o material de ${discipline}, qual alternativa está correta?`,
+                    options: options.slice(0, 4),
+                    correct: correctIdx,
+                    explanation: `Trecho de referência: "${target}."`
+                });
+            }
+
+            return { flashcards: generatedCards, quizzes: generatedQuizzes, mode: 'OFFLINE_CONTINGENCY' };
+        }
+
+        async function generateStudyMaterialWithAI(discipline, sourceText, fcCount = 10, qzCount = 8) {
+            const upperDiscipline = discipline.trim().toUpperCase();
+            const targetFc = sanitizeQuantity(fcCount, 10);
+            const targetQz = sanitizeQuantity(qzCount, 8);
+            const key = getActiveApiKey();
+
+            if (navigator.onLine) {
+                try {
+                    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${key}`;
+
+                    const systemPrompt = `Você é um professor especialista preparando candidatos para o exame EPVA na plataforma EPVA Prep.
+Analise o conteúdo fornecido e gere obrigatoriamente:
+1) Exatamente ${targetFc} Flashcards objetivos (campo 'front' com pergunta direta ou conceito-chave, campo 'back' com resposta clara e completa).
+2) Exatamente ${targetQz} Questões de Simulado de múltipla escolha (campo 'question' com enunciado claro, campo 'options' com exatamente 4 alternativas plausíveis, campo 'correct' com o índice inteiro de 0 a 3 da resposta correta, e campo 'explanation' com justificativa comentada).
+Respeite rigorosamente as quantidades ${targetFc} flashcards e ${targetQz} questões. Responda estritamente em Português do Brasil em JSON.`;
+
+                    const userQuery = `Disciplina: ${upperDiscipline}\nQuantidade de questões solicitada: ${targetQz}\nQuantidade de flashcards solicitada: ${targetFc}\n\nMaterial Base:\n${sourceText.slice(0, 22000)}`;
+
+                    const payload = {
+                        contents: [{ parts: [{ text: userQuery }] }],
+                        systemInstruction: { parts: [{ text: systemPrompt }] },
+                        generationConfig: {
+                            responseMimeType: "application/json",
+                            responseSchema: {
+                                type: "OBJECT",
+                                properties: {
+                                    flashcards: {
+                                        type: "ARRAY",
+                                        items: {
+                                            type: "OBJECT",
+                                            properties: {
+                                                front: { type: "STRING" },
+                                                back: { type: "STRING" }
+                                            },
+                                            required: ["front", "back"]
+                                        }
+                                    },
+                                    quizzes: {
+                                        type: "ARRAY",
+                                        items: {
+                                            type: "OBJECT",
+                                            properties: {
+                                                question: { type: "STRING" },
+                                                options: {
+                                                    type: "ARRAY",
+                                                    items: { type: "STRING" }
+                                                },
+                                                correct: { type: "INTEGER" },
+                                                explanation: { type: "STRING" }
+                                            },
+                                            required: ["question", "options", "correct", "explanation"]
+                                        }
+                                    }
+                                },
+                                required: ["flashcards", "quizzes"]
+                            }
+                        }
+                    };
+
+                    const result = await fetchWithBackoff(apiUrl, payload);
+                    const rawText = result?.candidates?.[0]?.content?.parts?.[0]?.text;
+
+                    if (rawText) {
+                        const parsed = JSON.parse(rawText);
+                        const newCards = (parsed.flashcards || []).slice(0, targetFc).map((c, idx) => ({
+                            id: Date.now() + idx,
+                            discipline: upperDiscipline,
+                            front: c.front,
+                            back: c.back,
+                            mastered: false
+                        }));
+
+                        const newQuizzes = (parsed.quizzes || []).slice(0, targetQz).map((q, idx) => ({
+                            id: Date.now() + 2000 + idx,
+                            discipline: upperDiscipline,
+                            question: q.question,
+                            options: q.options.slice(0, 4),
+                            correct: Math.min(Math.max(0, q.correct), 3),
+                            explanation: q.explanation
+                        }));
+
+                        if (newCards.length > 0 || newQuizzes.length > 0) {
+                            state.flashcards = [...newCards, ...state.flashcards];
+                            state.quizzes = [...newQuizzes, ...state.quizzes];
+                            saveLocalState();
+                            return {
+                                cardsAdded: newCards.length,
+                                quizzesAdded: newQuizzes.length,
+                                discipline: upperDiscipline,
+                                mode: 'GEMINI_AI'
+                            };
+                        }
+                    }
+                } catch (apiErr) {
+                    console.warn("Acionando contingência local:", apiErr);
+                }
+            }
+
+            const fallback = generateOfflineContingency(upperDiscipline, sourceText, targetFc, targetQz);
+            if (fallback.flashcards.length === 0 && fallback.quizzes.length === 0) {
+                throw new Error("Não há texto suficiente para gerar questões. Verifique o material ou sua conexão.");
+            }
+            state.flashcards = [...fallback.flashcards, ...state.flashcards];
+            state.quizzes = [...fallback.quizzes, ...state.quizzes];
+            saveLocalState();
+            return {
+                cardsAdded: fallback.flashcards.length,
+                quizzesAdded: fallback.quizzes.length,
+                discipline: upperDiscipline,
+                mode: 'OFFLINE_CONTINGENCY'
+            };
+        }
+
+        /* =====================================================================
+           INDEXED DB & LEITURA DE PDF (PDF.js)
+           ===================================================================== */
+        let db;
+        let currentPdfDoc = null;
+        let currentPdfMeta = null;
+        let currentPageNum = 1;
+        let pdfScale = 1.15;
+
+        function initIndexedDB() {
+            if (db) return Promise.resolve();
+            return new Promise((resolve) => {
+                const req = indexedDB.open("EPVA_Prep_Offline_PDFs_v1", 1);
+                req.onupgradeneeded = (e) => {
+                    const database = e.target.result;
+                    if (!database.objectStoreNames.contains("pdfs")) {
+                        database.createObjectStore("pdfs", { keyPath: "id", autoIncrement: true });
+                    }
+                };
+                req.onsuccess = (e) => {
+                    db = e.target.result;
+                    resolve();
+                };
+            });
+        }
+
+        async function handlePdfFileSelected(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const discInput = document.getElementById('pdf-discipline-input');
+            if (!discInput.value.trim()) {
+                const suggestedName = file.name
+                    .replace(/\.pdf$/i, '')
+                    .replace(/CONTEUDOS_/i, '')
+                    .replace(/[_-]+/g, ' ')
+                    .trim();
+                discInput.value = suggestedName;
+            }
+
+            const discipline = discInput.value.trim().toUpperCase();
+            const statusEl = document.getElementById('pdf-read-status');
+            statusEl.innerHTML = `<i class="fa-solid fa-spinner fa-spin text-emerald-600 text-base"></i><span class="font-semibold text-navy-900">Carregando páginas do PDF...</span>`;
+
+            const reader = new FileReader();
+            reader.onload = async function(evt) {
+                try {
+                    const arrayBuffer = evt.target.result;
+                    const tx = db.transaction("pdfs", "readwrite");
+                    const store = tx.objectStore("pdfs");
+                    const addReq = store.add({
+                        name: file.name,
+                        discipline: discipline,
+                        data: arrayBuffer.slice(0),
+                        addedAt: new Date().toLocaleDateString('pt-BR')
+                    });
+
+                    addReq.onsuccess = async () => {
+                        const savedId = addReq.result;
+                        await loadPdfIntoViewer({
+                            id: savedId,
+                            name: file.name,
+                            discipline: discipline,
+                            data: arrayBuffer
+                        });
+                        renderPdfLibrary();
+                        showToast(`PDF "${file.name}" salvo offline!`);
+                    };
+                } catch {
+                    statusEl.innerHTML = `<i class="fa-solid fa-triangle-exclamation text-red-500"></i><span class="text-red-600 font-semibold">Erro ao ler o arquivo PDF.</span>`;
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        async function loadPdfIntoViewer(item) {
+            currentPdfMeta = item;
+            document.getElementById('pdf-discipline-input').value = item.discipline;
+
+            const typedArray = new Uint8Array(item.data);
+            currentPdfDoc = await pdfjsLib.getDocument(typedArray).promise;
+            currentPageNum = 1;
+
+            const totalPages = currentPdfDoc.numPages;
+            document.getElementById('pdf-total-pages').textContent = totalPages;
+            document.getElementById('pdf-page-start').value = 1;
+            document.getElementById('pdf-page-start').max = totalPages;
+            document.getElementById('pdf-page-end').value = Math.min(15, totalPages);
+            document.getElementById('pdf-page-end').max = totalPages;
+
+            document.getElementById('pdf-viewer-toolbar').classList.remove('hidden');
+            document.getElementById('pdf-placeholder').classList.add('hidden');
+            document.getElementById('pdf-render-canvas').classList.remove('hidden');
+            document.getElementById('btn-generate-pdf-ai').disabled = false;
+
+            document.getElementById('pdf-read-status').innerHTML = `
+                <i class="fa-solid fa-circle-check text-emerald-600 text-base"></i>
+                <span><strong>${item.name}</strong> pronto (${totalPages} páginas). Escolha a quantidade de questões e clique em Gerar com IA.</span>
+            `;
+
+            await renderPdfPage(currentPageNum);
+            renderPdfLibrary();
+        }
+
+        async function renderPdfPage(num) {
+            if (!currentPdfDoc) return;
+            const page = await currentPdfDoc.getPage(num);
+            const viewport = page.getViewport({ scale: pdfScale });
+            const canvas = document.getElementById('pdf-render-canvas');
+            const ctx = canvas.getContext('2d');
+            canvas.height = viewport.height;
+            canvas.width = viewport.width;
+            await page.render({ canvasContext: ctx, viewport: viewport }).promise;
+            document.getElementById('pdf-current-page').textContent = num;
+        }
+
+        function changePdfPage(delta) {
+            if (!currentPdfDoc) return;
+            const target = currentPageNum + delta;
+            if (target >= 1 && target <= currentPdfDoc.numPages) {
+                currentPageNum = target;
+                renderPdfPage(currentPageNum);
+            }
+        }
+
+        function zoomPdf(delta) {
+            if (!currentPdfDoc) return;
+            pdfScale = Math.min(2.5, Math.max(0.6, pdfScale + delta));
+            renderPdfPage(currentPageNum);
+        }
+
+        async function triggerAutoGenerateFromCurrentPdf() {
+            if (!currentPdfDoc) {
+                showToast("Selecione um arquivo PDF primeiro.", "error");
+                return;
+            }
+
+            const disciplineInput = document.getElementById('pdf-discipline-input').value.trim();
+            const discipline = disciplineInput || (currentPdfMeta ? currentPdfMeta.discipline : "DISCIPLINA GERAL");
+            const startPage = Math.max(1, parseInt(document.getElementById('pdf-page-start').value, 10) || 1);
+            const endPage = Math.min(currentPdfDoc.numPages, parseInt(document.getElementById('pdf-page-end').value, 10) || 15);
+            const qzQty = sanitizeQuantity(document.getElementById('pdf-quiz-qty').value, 8);
+            const fcQty = sanitizeQuantity(document.getElementById('pdf-fc-qty').value, 10);
+
+            document.getElementById('pdf-quiz-qty').value = qzQty;
+            document.getElementById('pdf-fc-qty').value = fcQty;
+
+            if (endPage < startPage) {
+                showToast("A página final deve ser maior ou igual à inicial.", "error");
+                return;
+            }
+
+            const btn = document.getElementById('btn-generate-pdf-ai');
+            const progressBox = document.getElementById('pdf-ai-progress-box');
+            const progressTitle = document.getElementById('pdf-ai-progress-title');
+
+            btn.disabled = true;
+            progressBox.classList.remove('hidden');
+            progressTitle.textContent = `Extraindo texto das páginas ${startPage} a ${endPage}...`;
+
+            try {
+                let extractedText = "";
+                for (let p = startPage; p <= endPage; p++) {
+                    const page = await currentPdfDoc.getPage(p);
+                    const textContent = await page.getTextContent();
+                    const pageStrings = textContent.items.map(item => item.str).join(" ");
+                    extractedText += `\n[Página ${p}]\n${pageStrings}`;
+                }
+
+                if (extractedText.trim().length < 40) {
+                    throw new Error("Pouco texto extraído nesse intervalo. Tente outras páginas.");
+                }
+
+                progressTitle.textContent = `Gerando ${qzQty} questões e ${fcQty} flashcards para ${discipline}...`;
+                const res = await generateStudyMaterialWithAI(discipline, extractedText, fcQty, qzQty);
+
+                showToast(`Pronto! ${res.quizzesAdded} questões e ${res.cardsAdded} flashcards gerados para ${res.discipline}.`);
+
+                document.getElementById('fc-filter-discipline').value = res.discipline;
+                document.getElementById('quiz-filter-discipline').value = res.discipline;
+                filterFlashcards();
+                startFilteredQuiz();
+                switchTab('quiz');
+            } catch (err) {
+                showToast(err.message || "Erro ao processar o PDF.", "error");
+            } finally {
+                btn.disabled = false;
+                progressBox.classList.add('hidden');
+            }
+        }
+
+        function renderPdfLibrary() {
+            if (!db) return;
+            const tx = db.transaction("pdfs", "readonly");
+            const req = tx.objectStore("pdfs").getAll();
+            req.onsuccess = () => {
+                const listData = req.result;
+                document.getElementById('pdf-count-badge').textContent = listData.length;
+                const listEl = document.getElementById('pdf-library-list');
+                listEl.innerHTML = '';
+
+                if (listData.length === 0) {
+                    listEl.innerHTML = '<p class="text-xs text-slate-400 text-center py-6">Nenhum PDF salvo ainda.<br>Envie um arquivo acima.</p>';
+                    return;
+                }
+
+                listData.forEach(item => {
+                    const isSelected = currentPdfMeta && currentPdfMeta.id === item.id;
+                    const div = document.createElement('div');
+                    div.className = `p-3 rounded-xl border ${isSelected ? 'border-emerald-500 bg-emerald-50/70' : 'border-slate-200 bg-slate-50 hover:border-emerald-400'} cursor-pointer transition flex justify-between items-center gap-2`;
+                    div.onclick = () => loadPdfIntoViewer(item);
+                    div.innerHTML = `
+                        <div class="truncate">
+                            <span class="text-[10px] font-extrabold text-emerald-700 uppercase block truncate">${item.discipline}</span>
+                            <span class="text-xs font-semibold text-slate-800 truncate block"><i class="fa-solid fa-file-pdf text-red-500 mr-1"></i>${item.name}</span>
+                        </div>
+                        <button onclick="event.stopPropagation(); deletePdf(${item.id})" class="text-slate-400 hover:text-red-500 p-1" title="Remover PDF">
+                            <i class="fa-solid fa-trash-can text-xs"></i>
+                        </button>
+                    `;
+                    listEl.appendChild(div);
+                });
+            };
+        }
+
+        function deletePdf(id) {
+            const tx = db.transaction("pdfs", "readwrite");
+            tx.objectStore("pdfs").delete(id).onsuccess = () => {
+                if (currentPdfMeta && currentPdfMeta.id === id) {
+                    currentPdfDoc = null;
+                    currentPdfMeta = null;
+                    document.getElementById('pdf-viewer-toolbar').classList.add('hidden');
+                    document.getElementById('pdf-render-canvas').classList.add('hidden');
+                    document.getElementById('pdf-placeholder').classList.remove('hidden');
+                    document.getElementById('btn-generate-pdf-ai').disabled = true;
+                }
+                renderPdfLibrary();
+                showToast("PDF removido da biblioteca.");
+            };
+        }
+
+        /* =====================================================================
+           GERADOR RÁPIDO POR TEMA / TEXTO VIA IA (ABA 2)
+           ===================================================================== */
+        async function handleTopicAiGenerate(e) {
+            e.preventDefault();
+            const discipline = document.getElementById('topic-ai-discipline').value.trim();
+            const promptText = document.getElementById('topic-ai-prompt').value.trim();
+            const qzQty = sanitizeQuantity(document.getElementById('topic-ai-qz-qty').value, 8);
+            const fcQty = sanitizeQuantity(document.getElementById('topic-ai-fc-qty').value, 8);
+            const btn = document.getElementById('btn-topic-ai');
+
+            document.getElementById('topic-ai-qz-qty').value = qzQty;
+            document.getElementById('topic-ai-fc-qty').value = fcQty;
+
+            const originalHtml = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i><span>Criando ${qzQty} Questões e ${fcQty} Flashcards...</span>`;
+
+            try {
+                const res = await generateStudyMaterialWithAI(discipline, promptText, fcQty, qzQty);
+                document.getElementById('topic-ai-prompt').value = '';
+                showToast(`Gerados ${res.quizzesAdded} questões e ${res.cardsAdded} flashcards para ${res.discipline}!`);
+
+                document.getElementById('fc-filter-discipline').value = res.discipline;
+                document.getElementById('quiz-filter-discipline').value = res.discipline;
+                filterFlashcards();
+                startFilteredQuiz();
+                switchTab('quiz');
+            } catch (err) {
+                showToast(err.message || "Erro ao gerar conteúdo.", "error");
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = originalHtml;
+            }
+        }
+
+        /* =====================================================================
+           FLASHCARDS INTERATIVOS 3D
+           ===================================================================== */
+        function filterFlashcards() {
+            const filter = document.getElementById('fc-filter-discipline').value;
+            state.filteredFlashcards = filter === 'ALL'
+                ? [...state.flashcards]
+                : state.flashcards.filter(c => c.discipline === filter);
+            state.currentCardIdx = 0;
+            renderFlashcard();
+        }
+
+        function renderFlashcard() {
+            const emptyEl = document.getElementById('flashcard-empty');
+            const deckEl = document.getElementById('flashcard-deck-active');
+
+            if (state.filteredFlashcards.length === 0) {
+                emptyEl.classList.remove('hidden');
+                deckEl.classList.add('hidden');
+                return;
+            }
+
+            emptyEl.classList.add('hidden');
+            deckEl.classList.remove('hidden');
+
+            const masteredTotal = state.filteredFlashcards.filter(c => c.mastered).length;
+            document.getElementById('fc-mastered-badge').textContent = `${masteredTotal} / ${state.filteredFlashcards.length}`;
+
+            const card = state.filteredFlashcards[state.currentCardIdx];
+            state.isFlipped = false;
+            document.getElementById('card-inner').classList.remove('rotate-y-180');
+            document.getElementById('card-front-discipline').textContent = card.discipline;
+            document.getElementById('card-front-text').textContent = card.front;
+            document.getElementById('card-back-text').textContent = card.back;
+            document.getElementById('card-counter').textContent = `${state.currentCardIdx + 1} / ${state.filteredFlashcards.length}`;
+
+            const statusPill = document.getElementById('card-status-pill');
+            const toggleBtn = document.getElementById('btn-toggle-mastered');
+
+            if (card.mastered) {
+                statusPill.className = "text-[10px] font-bold px-2.5 py-1 rounded-lg bg-emerald-100 text-emerald-800 flex-shrink-0";
+                statusPill.innerHTML = `<i class="fa-solid fa-check mr-1"></i>Dominado`;
+                toggleBtn.className = "bg-slate-700 hover:bg-slate-600 text-slate-200 text-xs font-bold px-3 py-1.5 rounded-lg transition flex items-center gap-1.5";
+                toggleBtn.innerHTML = `<i class="fa-solid fa-rotate-left"></i><span>Revisar Novamente</span>`;
+            } else {
+                statusPill.className = "text-[10px] font-bold px-2.5 py-1 rounded-lg bg-slate-100 text-slate-500 flex-shrink-0";
+                statusPill.textContent = "Em Revisão";
+                toggleBtn.className = "bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold px-3 py-1.5 rounded-lg transition flex items-center gap-1.5";
+                toggleBtn.innerHTML = `<i class="fa-solid fa-check"></i><span>Marcar como Dominado</span>`;
+            }
+        }
+
+        function toggleMasteredCurrentCard() {
+            if (state.filteredFlashcards.length === 0) return;
+            const current = state.filteredFlashcards[state.currentCardIdx];
+            const original = state.flashcards.find(c => c.id === current.id);
+            if (original) {
+                original.mastered = !original.mastered;
+                current.mastered = original.mastered;
+                saveLocalState();
+                renderFlashcard();
+                showToast(original.mastered ? "Cartão marcado como dominado!" : "Cartão retornado para revisão.");
+            }
+        }
+
+        function flipCard() {
+            state.isFlipped = !state.isFlipped;
+            document.getElementById('card-inner').classList.toggle('rotate-y-180', state.isFlipped);
+        }
+
+        function navigateCard(dir) {
+            const total = state.filteredFlashcards.length;
+            if (total === 0) return;
+            state.currentCardIdx = (state.currentCardIdx + dir + total) % total;
+            renderFlashcard();
+        }
+
+        function deleteCurrentFlashcard() {
+            if (state.filteredFlashcards.length === 0) return;
+            const target = state.filteredFlashcards[state.currentCardIdx];
+            state.flashcards = state.flashcards.filter(c => c.id !== target.id);
+            saveLocalState();
+            filterFlashcards();
+            showToast("Flashcard removido.");
+        }
+
+        /* =====================================================================
+           SIMULADOS DE MÚLTIPLA ESCOLHA
+           ===================================================================== */
+        function startFilteredQuiz() {
+            const filter = document.getElementById('quiz-filter-discipline').value;
+            const pool = filter === 'ALL'
+                ? [...state.quizzes]
+                : state.quizzes.filter(q => q.discipline === filter);
+
+            state.activeQuizList = pool;
+            state.currentQuizIdx = 0;
+            state.sessionScore = 0;
+
+            document.getElementById('quiz-summary-card').classList.add('hidden');
+            renderCurrentQuiz();
+        }
+
+        function renderCurrentQuiz() {
+            const emptyEl = document.getElementById('quiz-empty-state');
+            const activeEl = document.getElementById('quiz-active-card');
+
+            if (state.activeQuizList.length === 0) {
+                emptyEl.classList.remove('hidden');
+                activeEl.classList.add('hidden');
+                return;
+            }
+
+            emptyEl.classList.add('hidden');
+            activeEl.classList.remove('hidden');
+
+            const q = state.activeQuizList[state.currentQuizIdx];
+            state.selectedOption = null;
+
+            document.getElementById('quiz-discipline-tag').textContent = q.discipline;
+            document.getElementById('quiz-progress-text').textContent = `Questão ${state.currentQuizIdx + 1} de ${state.activeQuizList.length}`;
+            document.getElementById('quiz-question-text').textContent = q.question;
+
+            document.getElementById('btn-submit-quiz').classList.remove('hidden');
+            document.getElementById('btn-next-quiz').classList.add('hidden');
+            document.getElementById('quiz-feedback').classList.add('hidden');
+
+            const container = document.getElementById('quiz-options-container');
+            container.innerHTML = '';
+
+            q.options.forEach((opt, idx) => {
+                const label = document.createElement('label');
+                label.id = `opt-label-${idx}`;
+                label.className = "border border-slate-200 hover:border-emerald-500 p-4 rounded-xl flex items-center space-x-3.5 cursor-pointer transition bg-white shadow-sm";
+                label.innerHTML = `
+                    <input type="radio" name="quiz-radio" value="${idx}" class="w-4 h-4 text-emerald-600 focus:ring-emerald-500" onchange="state.selectedOption = ${idx}">
+                    <span class="text-sm font-medium text-slate-800 leading-snug">${opt}</span>
+                `;
+                container.appendChild(label);
+            });
+        }
+
+        function submitQuizAnswer() {
+            if (state.selectedOption === null) {
+                showToast("Selecione uma alternativa antes de responder.", "error");
+                return;
+            }
+
+            const q = state.activeQuizList[state.currentQuizIdx];
+            const isCorrect = state.selectedOption === q.correct;
+
+            state.stats.attempted++;
+            if (isCorrect) {
+                state.stats.correct++;
+                state.sessionScore++;
+            }
+            saveLocalState();
+
+            q.options.forEach((_, idx) => {
+                const lbl = document.getElementById(`opt-label-${idx}`);
+                const radio = lbl.querySelector('input');
+                radio.disabled = true;
+
+                if (idx === q.correct) {
+                    lbl.className = "border-2 border-emerald-500 bg-emerald-50 p-4 rounded-xl flex items-center space-x-3.5 transition";
+                } else if (idx === state.selectedOption && !isCorrect) {
+                    lbl.className = "border-2 border-red-400 bg-red-50 p-4 rounded-xl flex items-center space-x-3.5 transition";
+                }
+            });
+
+            const fb = document.getElementById('quiz-feedback');
+            fb.classList.remove('hidden');
+            if (isCorrect) {
+                fb.className = "p-4 rounded-xl text-xs md:text-sm bg-emerald-50 text-emerald-900 border border-emerald-200 space-y-1";
+                fb.innerHTML = `
+                    <div class="font-bold text-emerald-700 flex items-center gap-1.5"><i class="fa-solid fa-circle-check"></i> Resposta Correta!</div>
+                    ${q.explanation ? `<p class="text-slate-700">${q.explanation}</p>` : ''}
+                `;
+            } else {
+                fb.className = "p-4 rounded-xl text-xs md:text-sm bg-red-50 text-red-900 border border-red-200 space-y-1";
+                fb.innerHTML = `
+                    <div class="font-bold text-red-700 flex items-center gap-1.5"><i class="fa-solid fa-circle-xmark"></i> Incorreto. A correta é: "${q.options[q.correct]}"</div>
+                    ${q.explanation ? `<p class="text-slate-700">${q.explanation}</p>` : ''}
+                `;
+            }
+
+            document.getElementById('btn-submit-quiz').classList.add('hidden');
+            document.getElementById('btn-next-quiz').classList.remove('hidden');
+        }
+
+        function nextQuizQuestion() {
+            state.currentQuizIdx++;
+            if (state.currentQuizIdx >= state.activeQuizList.length) {
+                document.getElementById('quiz-active-card').classList.add('hidden');
+                const summary = document.getElementById('quiz-summary-card');
+                summary.classList.remove('hidden');
+                const total = state.activeQuizList.length;
+                const pct = Math.round((state.sessionScore / total) * 100);
+                document.getElementById('session-score-text').textContent = `${state.sessionScore} / ${total}`;
+                document.getElementById('session-percent-text').textContent = `${pct}% de aproveitamento nesta rodada`;
+                return;
+            }
+            renderCurrentQuiz();
+        }
+
+        function deleteCurrentQuiz() {
+            if (state.activeQuizList.length === 0) return;
+            const target = state.activeQuizList[state.currentQuizIdx];
+            state.quizzes = state.quizzes.filter(q => q.id !== target.id);
+            saveLocalState();
+            startFilteredQuiz();
+            showToast("Questão removida.");
+        }
+
+        /* =====================================================================
+           DASHBOARD, FILTROS & CONTAGEM REGRESSIVA
+           ===================================================================== */
+        function getAllDisciplines() {
+            const set = new Set();
+            state.flashcards.forEach(c => set.add(c.discipline));
+            state.quizzes.forEach(q => set.add(q.discipline));
+            return Array.from(set).sort();
+        }
+
+        function refreshDisciplineFilters() {
+            const disciplines = getAllDisciplines();
+            const fcSelect = document.getElementById('fc-filter-discipline');
+            const qzSelect = document.getElementById('quiz-filter-discipline');
+
+            const currentFc = fcSelect.value;
+            const currentQz = qzSelect.value;
+
+            const optionsHtml = `<option value="ALL">Todas as Disciplinas (${disciplines.length})</option>` +
+                disciplines.map(d => `<option value="${d}">${d}</option>`).join('');
+
+            fcSelect.innerHTML = optionsHtml;
+            qzSelect.innerHTML = optionsHtml;
+
+            if (disciplines.includes(currentFc)) fcSelect.value = currentFc;
+            if (disciplines.includes(currentQz)) qzSelect.value = currentQz;
+        }
+
+        function updateDashboard() {
+            const disciplines = getAllDisciplines();
+            document.getElementById('stat-attempted').textContent = state.stats.attempted;
+            document.getElementById('stat-total-bank').textContent = `de ${state.quizzes.length}`;
+
+            const acc = state.stats.attempted > 0
+                ? Math.round((state.stats.correct / state.stats.attempted) * 100)
+                : 0;
+            document.getElementById('stat-accuracy').textContent = `${acc}%`;
+            document.getElementById('stat-flashcard-count').textContent = state.flashcards.length;
+            document.getElementById('stat-disciplines-count').textContent = disciplines.length;
+
+            const listEl = document.getElementById('dashboard-disciplines-list');
+            listEl.innerHTML = '';
+
+            disciplines.forEach(disc => {
+                const fcList = state.flashcards.filter(c => c.discipline === disc);
+                const masteredCount = fcList.filter(c => c.mastered).length;
+                const qzCount = state.quizzes.filter(q => q.discipline === disc).length;
+
+                const card = document.createElement('div');
+                card.className = "p-4 rounded-xl border border-slate-200 bg-slate-50 flex flex-col justify-between gap-3";
+                card.innerHTML = `
+                    <div>
+                        <span class="text-xs font-extrabold text-navy-900 block line-clamp-1">${disc}</span>
+                        <span class="text-[11px] text-slate-500 mt-1 block">${fcList.length} Flashcards (${masteredCount} dominados) • ${qzCount} Questões</span>
+                    </div>
+                    <div class="flex gap-2">
+                        <button onclick="studyDisciplineFlashcards('${disc}')" class="flex-1 bg-white border border-slate-300 hover:border-navy-800 text-slate-700 py-2 rounded-lg text-[11px] font-bold transition">Flashcards</button>
+                        <button onclick="studyDisciplineQuiz('${disc}')" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white py-2 rounded-lg text-[11px] font-bold transition">Simulado</button>
+                    </div>
+                `;
+                listEl.appendChild(card);
+            });
+        }
+
+        function studyDisciplineFlashcards(disc) {
+            document.getElementById('fc-filter-discipline').value = disc;
+            filterFlashcards();
+            switchTab('flashcards');
+        }
+
+        function studyDisciplineQuiz(disc) {
+            document.getElementById('quiz-filter-discipline').value = disc;
+            startFilteredQuiz();
+            switchTab('quiz');
+        }
+
+        function updateCountdown() {
+            const now = new Date();
+            const diffDays = Math.max(0, Math.ceil((EXAM_DATE - now) / (1000 * 60 * 60 * 24)));
+            const label = `${diffDays} ${diffDays === 1 ? 'dia' : 'dias'}`;
+            document.getElementById('countdown-desktop').textContent = label;
+            document.getElementById('countdown-mobile').textContent = label;
+            document.getElementById('dashboard-countdown-text').textContent = `Faltam ${label} para a prova em 28/11/2026!`;
+        }
+
+        function updateNetworkStatus() {
+            const el = document.getElementById('network-status');
+            if (!el) return;
+            if (navigator.onLine) {
+                el.className = "text-emerald-400 font-semibold flex items-center gap-1.5";
+                el.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-400 inline-block"></span>Online (IA Ativa)`;
+            } else {
+                el.className = "text-amber-400 font-semibold flex items-center gap-1.5";
+                el.innerHTML = `<span class="w-2 h-2 rounded-full bg-amber-400 inline-block"></span>Offline (Estudo Local)`;
+            }
+        }
+
+        /* =====================================================================
+           NAVEGAÇÃO, MODAIS E NOTIFICAÇÕES
+           ===================================================================== */
+        function switchTab(tabId) {
+            if (tabId === 'master' && (!state.currentUser || state.currentUser.role !== 'master')) {
+                showToast("Acesso restrito ao usuário Master.", "error");
+                return;
+            }
+
+            document.querySelectorAll('.tab-view').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.classList.remove('bg-navy-800', 'text-emerald-400');
+                btn.classList.add('hover:bg-navy-800', 'hover:text-white');
+            });
+
+            document.getElementById(`view-${tabId}`).classList.remove('hidden');
+            const activeBtn = document.getElementById(`nav-${tabId}`);
+            if (activeBtn) {
+                activeBtn.classList.add('bg-navy-800', 'text-emerald-400');
+                activeBtn.classList.remove('hover:text-white');
+            }
+        }
+
+        function openModal(id) {
+            if (id === 'modal-api-settings') {
+                document.getElementById('custom-gemini-key-input').value = localStorage.getItem('epva_prep_custom_gemini_key') || '';
+            }
+            document.getElementById(id).classList.remove('hidden');
+        }
+
+        function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+
+        function showToast(msg, type = 'success') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `p-3.5 rounded-xl shadow-xl text-xs font-bold ${type === 'success' ? 'bg-navy-900 text-white border-l-4 border-emerald-500' : 'bg-red-900 text-white border-l-4 border-red-400'} flex items-center space-x-2.5 transition-all duration-300 pointer-events-auto max-w-sm`;
+            toast.innerHTML = `<i class="fa-solid ${type === 'success' ? 'fa-circle-check text-emerald-400' : 'fa-circle-exclamation text-red-300'} text-base"></i><span>${msg}</span>`;
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.classList.add('opacity-0');
+                setTimeout(() => toast.remove(), 300);
+            }, 3800);
+        }
+
+        window.addEventListener('online', updateNetworkStatus);
+        window.addEventListener('offline', updateNetworkStatus);
+
+        window.onload = async function() {
+            await initAuthData();
+            if (state.currentUser) {
+                await enterApp();
+            } else {
+                document.getElementById('login-screen').classList.remove('hidden');
+                document.getElementById('app-shell').classList.add('hidden');
+            }
+            setInterval(updateCountdown, 3600000);
+        };
+    </script>
+</body>
+</html>
