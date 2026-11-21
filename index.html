@@ -15,6 +15,8 @@
     <script>
         pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
     </script>
+    <!-- Supabase JS v2 -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
         tailwind.config = {
             theme: {
@@ -58,6 +60,7 @@
                 </div>
                 <h1 class="text-2xl font-black text-navy-900 tracking-tight">EPVA Prep</h1>
                 <p class="text-xs text-slate-500 font-medium">Acesso exclusivo para alunos cadastrados e administração Master</p>
+                <span id="db-mode-badge" class="inline-block text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-600">Modo Local (Configure o Supabase no código)</span>
             </div>
 
             <form onsubmit="handleLoginSubmit(event)" class="space-y-4">
@@ -79,7 +82,7 @@
 
                 <p id="login-error-msg" class="hidden text-xs font-bold text-red-600 bg-red-50 border border-red-200 p-3 rounded-xl"></p>
 
-                <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3.5 rounded-xl text-sm transition shadow-lg shadow-emerald-600/20 flex items-center justify-center gap-2">
+                <button type="submit" id="btn-login-submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3.5 rounded-xl text-sm transition shadow-lg shadow-emerald-600/20 flex items-center justify-center gap-2">
                     <i class="fa-solid fa-right-to-bracket"></i>
                     <span>Entrar no EPVA Prep</span>
                 </button>
@@ -121,7 +124,6 @@
         <!-- Sidebar Lateral (Desktop) / Barra Inferior (Mobile) -->
         <aside class="w-full md:w-64 bg-navy-900 text-slate-300 flex-shrink-0 flex flex-col justify-between md:min-h-screen fixed md:relative bottom-0 left-0 z-40 shadow-2xl border-t md:border-t-0 md:border-r border-slate-800">
             <div>
-                <!-- Logo EPVA Prep -->
                 <div class="hidden md:flex items-center space-x-3.5 p-6 border-b border-slate-800/80">
                     <div class="bg-emerald-600 text-white p-3 rounded-2xl shadow-lg shadow-emerald-600/20">
                         <i class="fa-solid fa-graduation-cap text-2xl"></i>
@@ -132,7 +134,6 @@
                     </div>
                 </div>
 
-                <!-- Usuário Logado -->
                 <div class="hidden md:flex items-center justify-between mx-4 mt-4 px-3.5 py-2.5 bg-navy-950/70 border border-slate-800 rounded-xl">
                     <div class="truncate">
                         <span class="text-[10px] uppercase tracking-wider text-slate-400 font-bold block" id="desktop-user-role">Conta Ativa</span>
@@ -143,14 +144,12 @@
                     </button>
                 </div>
 
-                <!-- Contagem Regressiva -->
                 <div class="hidden md:block mx-4 my-4 p-4 bg-navy-950/90 border border-slate-800 rounded-2xl text-center shadow-inner">
                     <span class="text-[11px] text-slate-400 uppercase tracking-wider font-bold block mb-1">Contagem Regressiva</span>
                     <div class="text-2xl font-black text-emerald-400 font-mono tracking-tight" id="countdown-desktop">-- dias</div>
                     <div class="text-[11px] text-slate-400 mt-1 font-medium">Prova em 28/11/2026</div>
                 </div>
 
-                <!-- Menu de Navegação -->
                 <nav class="flex md:flex-col justify-around md:justify-start p-1.5 md:p-3 space-y-0 md:space-y-1.5">
                     <button onclick="switchTab('pdf-ai')" id="nav-pdf-ai" class="nav-btn flex flex-col md:flex-row items-center md:space-x-3 px-2 py-2 md:py-3.5 rounded-xl w-full hover:bg-navy-800 hover:text-white text-[10px] md:text-sm font-semibold transition-all">
                         <i class="fa-solid fa-file-pdf text-base md:text-lg"></i>
@@ -179,7 +178,6 @@
                 </nav>
             </div>
 
-            <!-- Status Offline/Online & Configuração Opcional de Chave -->
             <div class="hidden md:block p-4 border-t border-slate-800 text-xs text-slate-400 space-y-2.5">
                 <div class="flex justify-between items-center">
                     <span>Status:</span>
@@ -187,11 +185,15 @@
                         <span class="w-2 h-2 rounded-full bg-emerald-400 inline-block"></span>Online (IA Ativa)
                     </span>
                 </div>
+                <button onclick="syncCloudNow()" class="w-full py-2 px-3 rounded-xl bg-emerald-900/50 hover:bg-emerald-900/80 text-emerald-300 text-[11px] font-semibold flex items-center justify-center gap-1.5 transition border border-emerald-700/50">
+                    <i class="fa-solid fa-cloud-arrow-up"></i>
+                    <span>Sincronizar Nuvem</span>
+                </button>
                 <button onclick="openModal('modal-api-settings')" class="w-full py-2 px-3 rounded-xl bg-navy-800 hover:bg-slate-800 text-slate-300 text-[11px] font-semibold flex items-center justify-center gap-1.5 transition border border-slate-700">
                     <i class="fa-solid fa-key text-emerald-400"></i>
-                    <span>Configurar Chave API</span>
+                    <span>Chave IA (Opcional)</span>
                 </button>
-                <p class="text-[11px] text-slate-500 leading-relaxed">EPVA Prep • Conteúdos salvos localmente para estudo offline.</p>
+                <p class="text-[11px] text-slate-500 leading-relaxed">EPVA Prep • GitHub Pages + Supabase.</p>
             </div>
         </aside>
 
@@ -214,11 +216,10 @@
                             </div>
                         </div>
                         <button onclick="openModal('modal-api-settings')" class="md:hidden self-start bg-slate-100 text-slate-700 px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5">
-                            <i class="fa-solid fa-key text-emerald-600"></i> Chave API
+                            <i class="fa-solid fa-key text-emerald-600"></i> Chave IA
                         </button>
                     </div>
 
-                    <!-- Linha 1: Disciplina, Arquivo PDF e Páginas -->
                     <div class="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
                         <div class="md:col-span-4">
                             <label class="block text-[11px] font-bold text-slate-600 uppercase mb-1.5">1. Nome da Disciplina</label>
@@ -242,7 +243,6 @@
                         </div>
                     </div>
 
-                    <!-- Linha 2: Quantidade de Questões e Flashcards por Disciplina -->
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-slate-50 p-4 rounded-xl border border-slate-200/80">
                         <div>
                             <label for="pdf-quiz-qty" class="block text-[11px] font-bold text-navy-900 uppercase mb-1.5">
@@ -260,7 +260,6 @@
                         </div>
                     </div>
 
-                    <!-- Barra de Status de Leitura e Botão Principal de IA -->
                     <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 pt-1 bg-slate-50 p-4 rounded-xl border border-slate-200/80">
                         <div class="text-xs text-slate-600 flex items-center space-x-2.5" id="pdf-read-status">
                             <i class="fa-solid fa-circle-info text-slate-400 text-base"></i>
@@ -273,7 +272,6 @@
                         </button>
                     </div>
 
-                    <!-- Barra de Progresso IA -->
                     <div id="pdf-ai-progress-box" class="hidden p-4 bg-navy-900 text-white rounded-xl flex items-center justify-between gap-3 shadow-lg">
                         <div class="flex items-center space-x-3">
                             <i class="fa-solid fa-spinner fa-spin text-emerald-400 text-xl"></i>
@@ -285,7 +283,6 @@
                     </div>
                 </div>
 
-                <!-- Grid Inferior: Biblioteca Offline + Leitor Visual PDF.js -->
                 <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
                     <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm h-fit space-y-4">
                         <div class="flex items-center justify-between border-b border-slate-100 pb-3">
@@ -344,7 +341,6 @@
                     </div>
                 </div>
 
-                <!-- Cards de Estatísticas -->
                 <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
                     <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
                         <div class="flex justify-between items-center text-slate-400 mb-2">
@@ -382,7 +378,6 @@
                     </div>
                 </div>
 
-                <!-- Gerador Rápido por Tema ou Texto Colado -->
                 <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
                     <div class="flex items-center space-x-3 border-b border-slate-100 pb-4">
                         <div class="bg-emerald-100 text-emerald-700 p-3 rounded-xl">
@@ -422,10 +417,9 @@
                     </form>
                 </div>
 
-                <!-- Disciplinas Cadastradas no Banco -->
                 <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
                     <div class="flex flex-wrap justify-between items-center gap-2">
-                        <h3 class="font-bold text-slate-900 text-base">Disciplinas Disponíveis Offline</h3>
+                        <h3 class="font-bold text-slate-900 text-base">Disciplinas Disponíveis</h3>
                         <button onclick="resetDefaultData()" class="text-xs text-slate-400 hover:text-navy-900 font-semibold transition">
                             <i class="fa-solid fa-rotate-left mr-1"></i>Restaurar Conteúdo Inicial
                         </button>
@@ -472,7 +466,6 @@
 
                         <div id="card-element" onclick="flipCard()" class="perspective-1000 w-full h-72 md:h-80 cursor-pointer select-none">
                             <div id="card-inner" class="transform-style-3d transition-transform duration-500 w-full h-full relative rounded-2xl shadow-md border border-slate-200">
-                                <!-- Frente -->
                                 <div class="backface-hidden absolute inset-0 bg-white rounded-2xl p-6 md:p-8 flex flex-col justify-between">
                                     <div class="flex justify-between items-center gap-2">
                                         <span class="text-[10px] md:text-[11px] font-extrabold uppercase tracking-widest text-emerald-700 bg-emerald-50 border border-emerald-200 px-3 py-1 rounded-lg truncate" id="card-front-discipline">DISCIPLINA</span>
@@ -489,7 +482,6 @@
                                     </div>
                                 </div>
 
-                                <!-- Verso -->
                                 <div class="backface-hidden rotate-y-180 absolute inset-0 bg-navy-900 text-white rounded-2xl p-6 md:p-8 flex flex-col justify-between border border-navy-800">
                                     <div class="flex justify-between items-center">
                                         <span class="text-[11px] font-extrabold uppercase tracking-widest text-emerald-400 bg-navy-800 px-3 py-1 rounded-lg">RESPOSTA IA</span>
@@ -607,7 +599,7 @@
             </section>
 
             <!-- ========================================================= -->
-            <!-- ABA 5: ACESSO MASTER (CONTROLE DE ALUNOS)                 -->
+            <!-- ABA 5: ACESSO MASTER (CONTROLE DE ALUNOS VIA SUPABASE)    -->
             <!-- ========================================================= -->
             <section id="view-master" class="tab-view hidden space-y-6">
                 <div class="bg-navy-900 text-white p-6 rounded-2xl border border-slate-800 shadow-lg flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
@@ -617,21 +609,14 @@
                         </div>
                         <div>
                             <h2 class="font-bold text-lg md:text-xl">Painel Master • EPVA Prep</h2>
-                            <p class="text-xs text-slate-300">Crie logins e senhas para os alunos, ative ou bloqueie acessos e gerencie sua senha Master.</p>
+                            <p class="text-xs text-slate-300">Crie logins e senhas para os alunos, ative ou bloqueie acessos na nuvem (Supabase).</p>
                         </div>
                     </div>
-                    <div class="flex flex-wrap gap-2">
-                        <button onclick="exportStudentsJson()" class="bg-navy-800 hover:bg-slate-800 text-slate-200 px-3.5 py-2 rounded-xl text-xs font-bold border border-slate-700 transition">
-                            <i class="fa-solid fa-download mr-1 text-emerald-400"></i>Exportar Lista
-                        </button>
-                        <label class="bg-navy-800 hover:bg-slate-800 text-slate-200 px-3.5 py-2 rounded-xl text-xs font-bold border border-slate-700 transition cursor-pointer">
-                            <i class="fa-solid fa-upload mr-1 text-emerald-400"></i>Importar Lista
-                            <input type="file" accept="application/json" onchange="importStudentsJson(event)" class="hidden">
-                        </label>
-                    </div>
+                    <button onclick="loadStudentsFromSource()" class="bg-navy-800 hover:bg-slate-800 text-slate-200 px-3.5 py-2 rounded-xl text-xs font-bold border border-slate-700 transition">
+                        <i class="fa-solid fa-rotate mr-1 text-emerald-400"></i>Atualizar Lista
+                    </button>
                 </div>
 
-                <!-- Cadastrar Novo Aluno -->
                 <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
                     <h3 class="font-bold text-navy-900 text-base border-b border-slate-100 pb-3">Cadastrar Novo Aluno</h3>
                     <form onsubmit="handleAddStudent(event)" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
@@ -654,7 +639,6 @@
                     </form>
                 </div>
 
-                <!-- Lista de Alunos Cadastrados -->
                 <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
                     <div class="flex justify-between items-center border-b border-slate-100 pb-3">
                         <h3 class="font-bold text-navy-900 text-base">Alunos Cadastrados</h3>
@@ -663,7 +647,6 @@
                     <div id="students-list-container" class="space-y-2.5"></div>
                 </div>
 
-                <!-- Alterar Senha Master -->
                 <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
                     <h3 class="font-bold text-navy-900 text-base border-b border-slate-100 pb-3">Segurança • Alterar Senha Master</h3>
                     <form onsubmit="handleChangeMasterPassword(event)" class="flex flex-col sm:flex-row gap-3 items-stretch sm:items-end max-w-lg">
@@ -681,35 +664,43 @@
     </div>
 
     <!-- ========================================================= -->
-    <!-- MODAL OPCIONAL: CONFIGURAÇÃO DE CHAVE GEMINI API          -->
+    <!-- MODAL OPCIONAL: CONFIGURAÇÃO DE API / BACKEND PYTHON      -->
     <!-- ========================================================= -->
     <div id="modal-api-settings" class="fixed inset-0 bg-navy-950/75 z-50 flex items-center justify-center p-4 hidden">
         <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200 space-y-4">
             <div class="flex justify-between items-center border-b border-slate-100 pb-3">
                 <div class="flex items-center space-x-2">
                     <i class="fa-solid fa-key text-emerald-600"></i>
-                    <h3 class="font-bold text-navy-900">Configuração da API Gemini</h3>
+                    <h3 class="font-bold text-navy-900">Configuração de IA & Backend</h3>
                 </div>
                 <button onclick="closeModal('modal-api-settings')" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
             </div>
             <p class="text-xs text-slate-600 leading-relaxed">
-                Caso você rode o EPVA Prep fora de um ambiente com chave pré-injetada, informe aqui a chave API do Gemini para geração online com IA (ou utilize o modo offline automático).
+                Opcionalmente, informe a URL do seu backend Python/FastAPI (ex.: <span class="font-mono">https://seu-api.onrender.com</span>) ou uma chave Gemini local. Sem conexão ou chave, o modo offline continua funcionando.
             </p>
+            <div>
+                <label class="block text-[11px] font-bold text-slate-700 uppercase mb-1">URL Backend Python / FastAPI (Opcional)</label>
+                <input type="url" id="custom-backend-url-input" placeholder="https://..." class="w-full border border-slate-300 rounded-xl p-2.5 text-sm font-mono focus:ring-2 focus:ring-emerald-500">
+            </div>
             <div>
                 <label class="block text-[11px] font-bold text-slate-700 uppercase mb-1">Chave API Gemini (Opcional)</label>
                 <input type="password" id="custom-gemini-key-input" placeholder="AIzaSy..." class="w-full border border-slate-300 rounded-xl p-2.5 text-sm font-mono focus:ring-2 focus:ring-emerald-500">
             </div>
             <div class="flex space-x-2 pt-2">
-                <button type="button" onclick="clearCustomApiKey()" class="w-1/2 bg-slate-100 hover:bg-slate-200 text-slate-700 py-2.5 rounded-xl text-xs font-bold">Limpar Chave</button>
-                <button type="button" onclick="saveCustomApiKey()" class="w-1/2 bg-emerald-600 hover:bg-emerald-700 text-white py-2.5 rounded-xl text-xs font-bold shadow">Salvar Chave</button>
+                <button type="button" onclick="clearCustomApiKey()" class="w-1/2 bg-slate-100 hover:bg-slate-200 text-slate-700 py-2.5 rounded-xl text-xs font-bold">Limpar</button>
+                <button type="button" onclick="saveCustomApiKey()" class="w-1/2 bg-emerald-600 hover:bg-emerald-700 text-white py-2.5 rounded-xl text-xs font-bold shadow">Salvar</button>
             </div>
         </div>
     </div>
 
     <script>
         /* =====================================================================
-           CONFIGURAÇÃO GLOBAL & CONTEÚDO PRÉ-CARREGADO • EPVA PREP
+           CONFIGURAÇÃO DO SUPABASE & EPVA PREP
            ===================================================================== */
+        const SUPABASE_URL = "COLE_AQUI_SUA_PROJECT_URL"; // Ex: https://abcdefghijkl.supabase.co
+        const SUPABASE_ANON_KEY = "COLE_AQUI_SUA_ANON_KEY"; // Ex: eyJhbGciOiJIUzI1NiIs...
+        const DEFAULT_BACKEND_URL = ""; // Ex: https://epva-prep-api.onrender.com
+
         const EXAM_DATE = new Date('2026-11-28T08:00:00');
         const ENV_API_KEY = "";
 
@@ -777,6 +768,9 @@
             }
         ];
 
+        let supabaseClient = null;
+        let isSupabaseConfigured = false;
+
         let state = {
             currentUser: null,
             master: null,
@@ -794,8 +788,31 @@
         };
 
         /* =====================================================================
-           CONTROLE DE ACESSO: LOGIN, SENHA MASTER E GESTÃO DE ALUNOS
+           INICIALIZAÇÃO SUPABASE & AUTENTICAÇÃO MASTER / ALUNO
            ===================================================================== */
+        function initSupabaseClient() {
+            const hasUrl = SUPABASE_URL && SUPABASE_URL.startsWith("https://") && !SUPABASE_URL.includes("COLE_AQUI");
+            const hasKey = SUPABASE_ANON_KEY && SUPABASE_ANON_KEY.length > 20 && !SUPABASE_ANON_KEY.includes("COLE_AQUI");
+
+            if (hasUrl && hasKey && window.supabase) {
+                supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+                isSupabaseConfigured = true;
+            } else {
+                isSupabaseConfigured = false;
+            }
+
+            const badge = document.getElementById('db-mode-badge');
+            if (badge) {
+                if (isSupabaseConfigured) {
+                    badge.className = "inline-block text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800";
+                    badge.textContent = "Conectado ao Supabase (Nuvem Ativa)";
+                } else {
+                    badge.className = "inline-block text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-800";
+                    badge.textContent = "Modo Local (Preencha SUPABASE_URL e ANON_KEY no código)";
+                }
+            }
+        }
+
         async function hashPassword(password) {
             const encoder = new TextEncoder();
             const data = encoder.encode(password);
@@ -804,7 +821,38 @@
             return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
         }
 
+        async function loadStudentsFromSource() {
+            if (isSupabaseConfigured) {
+                const { data, error } = await supabaseClient
+                    .from('epva_alunos')
+                    .select('*')
+                    .order('id', { ascending: false });
+
+                if (error) {
+                    showToast("Erro ao buscar alunos no Supabase: " + error.message, "error");
+                    return;
+                }
+                state.students = (data || []).map(row => ({
+                    id: row.id,
+                    name: row.name,
+                    username: row.username,
+                    passwordHash: row.password_hash,
+                    active: Boolean(row.active),
+                    createdAt: row.created_at
+                }));
+            } else {
+                const storedStudents = localStorage.getItem('epva_prep_students');
+                state.students = storedStudents ? JSON.parse(storedStudents) : [];
+            }
+
+            if (state.currentUser && state.currentUser.role === 'master') {
+                renderStudentsList();
+            }
+        }
+
         async function initAuthData() {
+            initSupabaseClient();
+
             const storedMaster = localStorage.getItem('epva_prep_master');
             if (storedMaster) {
                 state.master = JSON.parse(storedMaster);
@@ -817,8 +865,7 @@
                 localStorage.setItem('epva_prep_master', JSON.stringify(state.master));
             }
 
-            const storedStudents = localStorage.getItem('epva_prep_students');
-            state.students = storedStudents ? JSON.parse(storedStudents) : [];
+            await loadStudentsFromSource();
 
             const activeSession = sessionStorage.getItem('epva_prep_session');
             if (activeSession) {
@@ -834,42 +881,45 @@
             }
         }
 
-        function saveStudentsList() {
-            localStorage.setItem('epva_prep_students', JSON.stringify(state.students));
-            renderStudentsList();
-        }
-
         async function handleLoginSubmit(e) {
             e.preventDefault();
             const username = document.getElementById('login-username').value.trim().toLowerCase();
             const password = document.getElementById('login-password').value;
             const errorEl = document.getElementById('login-error-msg');
+            const btnLogin = document.getElementById('btn-login-submit');
             errorEl.classList.add('hidden');
+            btnLogin.disabled = true;
 
-            const inputHash = await hashPassword(password);
+            try {
+                const inputHash = await hashPassword(password);
 
-            if (username === state.master.username.toLowerCase() && inputHash === state.master.passwordHash) {
-                state.currentUser = { username: state.master.username, name: state.master.name, role: 'master' };
-                sessionStorage.setItem('epva_prep_session', JSON.stringify(state.currentUser));
-                enterApp();
-                return;
-            }
-
-            const student = state.students.find(s => s.username.toLowerCase() === username);
-            if (student && student.passwordHash === inputHash) {
-                if (!student.active) {
-                    errorEl.textContent = "Seu acesso está bloqueado ou pendente de liberação com o Master.";
-                    errorEl.classList.remove('hidden');
+                if (username === state.master.username.toLowerCase() && inputHash === state.master.passwordHash) {
+                    state.currentUser = { username: state.master.username, name: state.master.name, role: 'master' };
+                    sessionStorage.setItem('epva_prep_session', JSON.stringify(state.currentUser));
+                    await enterApp();
                     return;
                 }
-                state.currentUser = { username: student.username, name: student.name, role: 'student' };
-                sessionStorage.setItem('epva_prep_session', JSON.stringify(state.currentUser));
-                enterApp();
-                return;
-            }
 
-            errorEl.textContent = "Usuário ou senha inválidos.";
-            errorEl.classList.remove('hidden');
+                await loadStudentsFromSource();
+                const student = state.students.find(s => s.username.toLowerCase() === username);
+
+                if (student && student.passwordHash === inputHash) {
+                    if (!student.active) {
+                        errorEl.textContent = "Seu acesso está bloqueado ou pendente de liberação com o Master.";
+                        errorEl.classList.remove('hidden');
+                        return;
+                    }
+                    state.currentUser = { username: student.username, name: student.name, role: 'student' };
+                    sessionStorage.setItem('epva_prep_session', JSON.stringify(state.currentUser));
+                    await enterApp();
+                    return;
+                }
+
+                errorEl.textContent = "Usuário ou senha inválidos.";
+                errorEl.classList.remove('hidden');
+            } finally {
+                btnLogin.disabled = false;
+            }
         }
 
         function logoutUser() {
@@ -893,7 +943,7 @@
             document.getElementById('mobile-user-badge').textContent = isMaster ? "Master" : state.currentUser.name;
 
             await initIndexedDB();
-            loadLocalState();
+            await loadStateWithCloudSync();
             updateCountdown();
             updateNetworkStatus();
             renderPdfLibrary();
@@ -911,35 +961,68 @@
             const name = document.getElementById('new-student-name').value.trim();
             const username = document.getElementById('new-student-user').value.trim().toLowerCase();
             const rawPass = document.getElementById('new-student-pass').value;
+            const passwordHash = await hashPassword(rawPass);
+            const createdAt = new Date().toLocaleDateString('pt-BR');
 
             if (username === state.master.username.toLowerCase() || state.students.some(s => s.username.toLowerCase() === username)) {
                 showToast("Esse login já está em uso.", "error");
                 return;
             }
 
-            state.students.push({
-                id: Date.now(),
-                name,
-                username,
-                passwordHash: await hashPassword(rawPass),
-                active: true,
-                createdAt: new Date().toLocaleDateString('pt-BR')
-            });
+            if (isSupabaseConfigured) {
+                const { error } = await supabaseClient.from('epva_alunos').insert([{
+                    name,
+                    username,
+                    password_hash: passwordHash,
+                    active: true,
+                    created_at: createdAt
+                }]);
+                if (error) {
+                    showToast("Erro ao cadastrar no Supabase: " + error.message, "error");
+                    return;
+                }
+                await loadStudentsFromSource();
+            } else {
+                state.students.unshift({
+                    id: Date.now(),
+                    name,
+                    username,
+                    passwordHash,
+                    active: true,
+                    createdAt
+                });
+                localStorage.setItem('epva_prep_students', JSON.stringify(state.students));
+                renderStudentsList();
+            }
 
-            saveStudentsList();
             document.getElementById('new-student-name').value = '';
             document.getElementById('new-student-user').value = '';
             document.getElementById('new-student-pass').value = '';
             showToast(`Acesso criado para ${name} (${username})!`);
         }
 
-        function toggleStudentActive(id) {
+        async function toggleStudentActive(id) {
             if (!state.currentUser || state.currentUser.role !== 'master') return;
             const student = state.students.find(s => s.id === id);
             if (!student) return;
-            student.active = !student.active;
-            saveStudentsList();
-            showToast(student.active ? `Acesso de ${student.name} ativado.` : `Acesso de ${student.name} bloqueado.`);
+            const nextActive = !student.active;
+
+            if (isSupabaseConfigured) {
+                const { error } = await supabaseClient
+                    .from('epva_alunos')
+                    .update({ active: nextActive })
+                    .eq('id', id);
+                if (error) {
+                    showToast("Erro ao atualizar status: " + error.message, "error");
+                    return;
+                }
+                await loadStudentsFromSource();
+            } else {
+                student.active = nextActive;
+                localStorage.setItem('epva_prep_students', JSON.stringify(state.students));
+                renderStudentsList();
+            }
+            showToast(nextActive ? `Acesso de ${student.name} ativado.` : `Acesso de ${student.name} bloqueado.`);
         }
 
         async function resetStudentPassword(id) {
@@ -951,16 +1034,45 @@
                 showToast("Senha cancelada ou muito curta.", "error");
                 return;
             }
-            student.passwordHash = await hashPassword(nextPass.trim());
-            saveStudentsList();
+            const newHash = await hashPassword(nextPass.trim());
+
+            if (isSupabaseConfigured) {
+                const { error } = await supabaseClient
+                    .from('epva_alunos')
+                    .update({ password_hash: newHash })
+                    .eq('id', id);
+                if (error) {
+                    showToast("Erro ao trocar senha: " + error.message, "error");
+                    return;
+                }
+                await loadStudentsFromSource();
+            } else {
+                student.passwordHash = newHash;
+                localStorage.setItem('epva_prep_students', JSON.stringify(state.students));
+                renderStudentsList();
+            }
             showToast(`Senha de ${student.name} atualizada!`);
         }
 
-        function deleteStudent(id) {
+        async function deleteStudent(id) {
             if (!state.currentUser || state.currentUser.role !== 'master') return;
-            state.students = state.students.filter(s => s.id !== id);
-            saveStudentsList();
-            showToast("Aluno removido da lista.");
+
+            if (isSupabaseConfigured) {
+                const { error } = await supabaseClient
+                    .from('epva_alunos')
+                    .delete()
+                    .eq('id', id);
+                if (error) {
+                    showToast("Erro ao excluir aluno: " + error.message, "error");
+                    return;
+                }
+                await loadStudentsFromSource();
+            } else {
+                state.students = state.students.filter(s => s.id !== id);
+                localStorage.setItem('epva_prep_students', JSON.stringify(state.students));
+                renderStudentsList();
+            }
+            showToast("Aluno removido.");
         }
 
         async function handleChangeMasterPassword(e) {
@@ -976,6 +1088,8 @@
         function renderStudentsList() {
             const container = document.getElementById('students-list-container');
             const badge = document.getElementById('students-count-badge');
+            if (!container || !badge) return;
+
             badge.textContent = `${state.students.length} ${state.students.length === 1 ? 'aluno' : 'alunos'}`;
 
             if (state.students.length === 0) {
@@ -1013,40 +1127,8 @@
             });
         }
 
-        function exportStudentsJson() {
-            if (!state.currentUser || state.currentUser.role !== 'master') return;
-            const blob = new Blob([JSON.stringify(state.students, null, 2)], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'epva_prep_alunos.json';
-            a.click();
-            URL.revokeObjectURL(url);
-            showToast("Lista de alunos exportada.");
-        }
-
-        function importStudentsJson(e) {
-            if (!state.currentUser || state.currentUser.role !== 'master') return;
-            const file = e.target.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = (evt) => {
-                try {
-                    const imported = JSON.parse(evt.target.result);
-                    if (!Array.isArray(imported)) throw new Error("Formato inválido");
-                    state.students = imported;
-                    saveStudentsList();
-                    showToast("Lista de alunos importada com sucesso!");
-                } catch {
-                    showToast("Arquivo JSON inválido.", "error");
-                }
-            };
-            reader.readAsText(file);
-            e.target.value = '';
-        }
-
         /* =====================================================================
-           STORAGE LOCAL (POR USUÁRIO PARA PROGRESSO E CONTEÚDOS)
+           SINCRONIZAÇÃO COM NUVEM SUPABASE + STORAGE LOCAL OFFLINE
            ===================================================================== */
         function getUserStorageKey(suffix) {
             const userKey = state.currentUser ? state.currentUser.username : 'guest';
@@ -1062,7 +1144,7 @@
                 state.flashcards = [...DEFAULT_FLASHCARDS];
                 state.quizzes = [...DEFAULT_QUIZZES];
                 state.stats = { attempted: 0, correct: 0 };
-                saveLocalState();
+                saveLocalOnly();
             } else {
                 state.flashcards = JSON.parse(fcRaw);
                 state.quizzes = JSON.parse(qzRaw);
@@ -1070,12 +1152,114 @@
             }
         }
 
-        function saveLocalState() {
+        function saveLocalOnly() {
             localStorage.setItem(getUserStorageKey('flashcards'), JSON.stringify(state.flashcards));
             localStorage.setItem(getUserStorageKey('quizzes'), JSON.stringify(state.quizzes));
             localStorage.setItem(getUserStorageKey('stats'), JSON.stringify(state.stats));
             refreshDisciplineFilters();
             updateDashboard();
+        }
+
+        function canSyncStudentTablesToCloud() {
+            return Boolean(
+                isSupabaseConfigured &&
+                navigator.onLine &&
+                state.currentUser &&
+                state.currentUser.role === 'student'
+            );
+        }
+
+        async function loadStateWithCloudSync() {
+            loadLocalState();
+
+            if (!canSyncStudentTablesToCloud()) {
+                refreshDisciplineFilters();
+                updateDashboard();
+                return;
+            }
+
+            try {
+                const username = state.currentUser.username;
+                const [{ data: cloudFc, error: fcErr }, { data: cloudQz, error: qzErr }] = await Promise.all([
+                    supabaseClient.from('epva_flashcards').select('*').eq('student_username', username).order('id', { ascending: false }),
+                    supabaseClient.from('epva_quizzes').select('*').eq('student_username', username).order('id', { ascending: false })
+                ]);
+
+                if (fcErr || qzErr) return;
+
+                if ((cloudFc && cloudFc.length > 0) || (cloudQz && cloudQz.length > 0)) {
+                    state.flashcards = (cloudFc || []).map(r => ({
+                        id: r.id,
+                        discipline: r.discipline,
+                        front: r.front,
+                        back: r.back,
+                        mastered: Boolean(r.mastered)
+                    }));
+                    state.quizzes = (cloudQz || []).map(r => ({
+                        id: r.id,
+                        discipline: r.discipline,
+                        question: r.question,
+                        options: Array.isArray(r.options) ? r.options : [],
+                        correct: Number(r.correct) || 0,
+                        explanation: r.explanation || ""
+                    }));
+                    saveLocalOnly();
+                } else if (state.flashcards.length > 0 || state.quizzes.length > 0) {
+                    await syncCloudNow(true);
+                }
+            } catch (err) {
+                console.warn("Falha ao puxar dados da nuvem, mantendo cache local:", err);
+            }
+        }
+
+        async function syncCloudNow(silent = false) {
+            saveLocalOnly();
+            if (!canSyncStudentTablesToCloud()) {
+                if (!silent) showToast("Dados salvos localmente neste aparelho.");
+                return;
+            }
+
+            try {
+                const username = state.currentUser.username;
+                await supabaseClient.from('epva_flashcards').delete().eq('student_username', username);
+                await supabaseClient.from('epva_quizzes').delete().eq('student_username', username);
+
+                if (state.flashcards.length > 0) {
+                    const fcRows = state.flashcards.map(c => ({
+                        student_username: username,
+                        discipline: c.discipline,
+                        front: c.front,
+                        back: c.back,
+                        mastered: Boolean(c.mastered)
+                    }));
+                    const { error: fcInsErr } = await supabaseClient.from('epva_flashcards').insert(fcRows);
+                    if (fcInsErr) throw fcInsErr;
+                }
+
+                if (state.quizzes.length > 0) {
+                    const qzRows = state.quizzes.map(q => ({
+                        student_username: username,
+                        discipline: q.discipline,
+                        question: q.question,
+                        options: q.options,
+                        correct: q.correct,
+                        explanation: q.explanation || ""
+                    }));
+                    const { error: qzInsErr } = await supabaseClient.from('epva_quizzes').insert(qzRows);
+                    if (qzInsErr) throw qzInsErr;
+                }
+
+                if (!silent) showToast("Flashcards e simulados sincronizados com a nuvem!");
+            } catch (err) {
+                if (!silent) showToast("Salvo localmente; não foi possível sincronizar agora.", "error");
+            }
+        }
+
+        function saveLocalState() {
+            saveLocalOnly();
+            if (canSyncStudentTablesToCloud()) {
+                syncCloudNow(true);
+            }
         }
 
         function resetDefaultData() {
@@ -1088,24 +1272,36 @@
             showToast("Conteúdo inicial restaurado!");
         }
 
+        function getActiveBackendUrl() {
+            const custom = localStorage.getItem('epva_prep_custom_backend_url');
+            return (custom && custom.trim().startsWith('http')) ? custom.trim().replace(/\/+$/, '') : DEFAULT_BACKEND_URL.replace(/\/+$/, '');
+        }
+
         function getActiveApiKey() {
             const custom = localStorage.getItem('epva_prep_custom_gemini_key');
             return (custom && custom.trim().length > 10) ? custom.trim() : ENV_API_KEY;
         }
 
         function saveCustomApiKey() {
-            const val = document.getElementById('custom-gemini-key-input').value.trim();
-            if (val) {
-                localStorage.setItem('epva_prep_custom_gemini_key', val);
-                showToast("Chave API Gemini salva neste navegador!");
-            }
+            const keyVal = document.getElementById('custom-gemini-key-input').value.trim();
+            const urlVal = document.getElementById('custom-backend-url-input').value.trim();
+
+            if (keyVal) localStorage.setItem('epva_prep_custom_gemini_key', keyVal);
+            else localStorage.removeItem('epva_prep_custom_gemini_key');
+
+            if (urlVal) localStorage.setItem('epva_prep_custom_backend_url', urlVal);
+            else localStorage.removeItem('epva_prep_custom_backend_url');
+
+            showToast("Configurações salvas neste navegador!");
             closeModal('modal-api-settings');
         }
 
         function clearCustomApiKey() {
             localStorage.removeItem('epva_prep_custom_gemini_key');
+            localStorage.removeItem('epva_prep_custom_backend_url');
             document.getElementById('custom-gemini-key-input').value = '';
-            showToast("Chave personalizada removida.");
+            document.getElementById('custom-backend-url-input').value = '';
+            showToast("Configurações personalizadas removidas.");
             closeModal('modal-api-settings');
         }
 
@@ -1198,67 +1394,21 @@
             const upperDiscipline = discipline.trim().toUpperCase();
             const targetFc = sanitizeQuantity(fcCount, 10);
             const targetQz = sanitizeQuantity(qzCount, 8);
+            const backendUrl = getActiveBackendUrl();
             const key = getActiveApiKey();
 
             if (navigator.onLine) {
-                try {
-                    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${key}`;
+                // 1) Tenta endpoint Python/FastAPI se configurado
+                if (backendUrl) {
+                    try {
+                        const apiRes = await fetchWithBackoff(`${backendUrl}/api/generate-study`, {
+                            discipline: upperDiscipline,
+                            source_text: sourceText.slice(0, 20000),
+                            questions_count: targetQz,
+                            flashcards_count: targetFc
+                        });
 
-                    const systemPrompt = `Você é um professor especialista preparando candidatos para o exame EPVA na plataforma EPVA Prep.
-Analise o conteúdo fornecido e gere obrigatoriamente:
-1) Exatamente ${targetFc} Flashcards objetivos (campo 'front' com pergunta direta ou conceito-chave, campo 'back' com resposta clara e completa).
-2) Exatamente ${targetQz} Questões de Simulado de múltipla escolha (campo 'question' com enunciado claro, campo 'options' com exatamente 4 alternativas plausíveis, campo 'correct' com o índice inteiro de 0 a 3 da resposta correta, e campo 'explanation' com justificativa comentada).
-Respeite rigorosamente as quantidades ${targetFc} flashcards e ${targetQz} questões. Responda estritamente em Português do Brasil em JSON.`;
-
-                    const userQuery = `Disciplina: ${upperDiscipline}\nQuantidade de questões solicitada: ${targetQz}\nQuantidade de flashcards solicitada: ${targetFc}\n\nMaterial Base:\n${sourceText.slice(0, 22000)}`;
-
-                    const payload = {
-                        contents: [{ parts: [{ text: userQuery }] }],
-                        systemInstruction: { parts: [{ text: systemPrompt }] },
-                        generationConfig: {
-                            responseMimeType: "application/json",
-                            responseSchema: {
-                                type: "OBJECT",
-                                properties: {
-                                    flashcards: {
-                                        type: "ARRAY",
-                                        items: {
-                                            type: "OBJECT",
-                                            properties: {
-                                                front: { type: "STRING" },
-                                                back: { type: "STRING" }
-                                            },
-                                            required: ["front", "back"]
-                                        }
-                                    },
-                                    quizzes: {
-                                        type: "ARRAY",
-                                        items: {
-                                            type: "OBJECT",
-                                            properties: {
-                                                question: { type: "STRING" },
-                                                options: {
-                                                    type: "ARRAY",
-                                                    items: { type: "STRING" }
-                                                },
-                                                correct: { type: "INTEGER" },
-                                                explanation: { type: "STRING" }
-                                            },
-                                            required: ["question", "options", "correct", "explanation"]
-                                        }
-                                    }
-                                },
-                                required: ["flashcards", "quizzes"]
-                            }
-                        }
-                    };
-
-                    const result = await fetchWithBackoff(apiUrl, payload);
-                    const rawText = result?.candidates?.[0]?.content?.parts?.[0]?.text;
-
-                    if (rawText) {
-                        const parsed = JSON.parse(rawText);
-                        const newCards = (parsed.flashcards || []).slice(0, targetFc).map((c, idx) => ({
+                        const newCards = (apiRes.flashcards || []).slice(0, targetFc).map((c, idx) => ({
                             id: Date.now() + idx,
                             discipline: upperDiscipline,
                             front: c.front,
@@ -1266,13 +1416,13 @@ Respeite rigorosamente as quantidades ${targetFc} flashcards e ${targetQz} quest
                             mastered: false
                         }));
 
-                        const newQuizzes = (parsed.quizzes || []).slice(0, targetQz).map((q, idx) => ({
+                        const newQuizzes = (apiRes.quizzes || []).slice(0, targetQz).map((q, idx) => ({
                             id: Date.now() + 2000 + idx,
                             discipline: upperDiscipline,
                             question: q.question,
-                            options: q.options.slice(0, 4),
-                            correct: Math.min(Math.max(0, q.correct), 3),
-                            explanation: q.explanation
+                            options: (q.options || []).slice(0, 4),
+                            correct: Math.min(Math.max(0, Number(q.correct) || 0), 3),
+                            explanation: q.explanation || ""
                         }));
 
                         if (newCards.length > 0 || newQuizzes.length > 0) {
@@ -1283,12 +1433,110 @@ Respeite rigorosamente as quantidades ${targetFc} flashcards e ${targetQz} quest
                                 cardsAdded: newCards.length,
                                 quizzesAdded: newQuizzes.length,
                                 discipline: upperDiscipline,
-                                mode: 'GEMINI_AI'
+                                mode: 'FASTAPI_BACKEND'
                             };
                         }
+                    } catch (bErr) {
+                        console.warn("Backend FastAPI indisponível, tentando chamada direta:", bErr);
                     }
-                } catch (apiErr) {
-                    console.warn("Acionando contingência local:", apiErr);
+                }
+
+                // 2) Tenta chamada direta Gemini API se houver chave
+                if (key) {
+                    try {
+                        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${key}`;
+
+                        const systemPrompt = `Você é um professor especialista preparando candidatos para o exame EPVA na plataforma EPVA Prep.
+Analise o conteúdo fornecido e gere obrigatoriamente:
+1) Exatamente ${targetFc} Flashcards objetivos (campo 'front' com pergunta direta ou conceito-chave, campo 'back' com resposta clara e completa).
+2) Exatamente ${targetQz} Questões de Simulado de múltipla escolha (campo 'question' com enunciado claro, campo 'options' com exatamente 4 alternativas plausíveis, campo 'correct' com o índice inteiro de 0 a 3 da resposta correta, e campo 'explanation' com justificativa comentada).
+Respeite rigorosamente as quantidades ${targetFc} flashcards e ${targetQz} questões. Responda estritamente em Português do Brasil em JSON.`;
+
+                        const userQuery = `Disciplina: ${upperDiscipline}
+Quantidade de questões solicitada: ${targetQz}
+Quantidade de flashcards solicitada: ${targetFc}
+
+Material Base:
+${sourceText.slice(0, 22000)}`;
+
+                        const payload = {
+                            contents: [{ parts: [{ text: userQuery }] }],
+                            systemInstruction: { parts: [{ text: systemPrompt }] },
+                            generationConfig: {
+                                responseMimeType: "application/json",
+                                responseSchema: {
+                                    type: "OBJECT",
+                                    properties: {
+                                        flashcards: {
+                                            type: "ARRAY",
+                                            items: {
+                                                type: "OBJECT",
+                                                properties: {
+                                                    front: { type: "STRING" },
+                                                    back: { type: "STRING" }
+                                                },
+                                                required: ["front", "back"]
+                                            }
+                                        },
+                                        quizzes: {
+                                            type: "ARRAY",
+                                            items: {
+                                                type: "OBJECT",
+                                                properties: {
+                                                    question: { type: "STRING" },
+                                                    options: {
+                                                        type: "ARRAY",
+                                                        items: { type: "STRING" }
+                                                    },
+                                                    correct: { type: "INTEGER" },
+                                                    explanation: { type: "STRING" }
+                                                },
+                                                required: ["question", "options", "correct", "explanation"]
+                                            }
+                                        }
+                                    },
+                                    required: ["flashcards", "quizzes"]
+                                }
+                            }
+                        };
+
+                        const result = await fetchWithBackoff(apiUrl, payload);
+                        const rawText = result?.candidates?.[0]?.content?.parts?.[0]?.text;
+
+                        if (rawText) {
+                            const parsed = JSON.parse(rawText);
+                            const newCards = (parsed.flashcards || []).slice(0, targetFc).map((c, idx) => ({
+                                id: Date.now() + idx,
+                                discipline: upperDiscipline,
+                                front: c.front,
+                                back: c.back,
+                                mastered: false
+                            }));
+
+                            const newQuizzes = (parsed.quizzes || []).slice(0, targetQz).map((q, idx) => ({
+                                id: Date.now() + 2000 + idx,
+                                discipline: upperDiscipline,
+                                question: q.question,
+                                options: q.options.slice(0, 4),
+                                correct: Math.min(Math.max(0, q.correct), 3),
+                                explanation: q.explanation
+                            }));
+
+                            if (newCards.length > 0 || newQuizzes.length > 0) {
+                                state.flashcards = [...newCards, ...state.flashcards];
+                                state.quizzes = [...newQuizzes, ...state.quizzes];
+                                saveLocalState();
+                                return {
+                                    cardsAdded: newCards.length,
+                                    quizzesAdded: newQuizzes.length,
+                                    discipline: upperDiscipline,
+                                    mode: 'GEMINI_AI'
+                                };
+                            }
+                        }
+                    } catch (apiErr) {
+                        console.warn("Acionando contingência local:", apiErr);
+                    }
                 }
             }
 
@@ -1473,7 +1721,9 @@ Respeite rigorosamente as quantidades ${targetFc} flashcards e ${targetQz} quest
                     const page = await currentPdfDoc.getPage(p);
                     const textContent = await page.getTextContent();
                     const pageStrings = textContent.items.map(item => item.str).join(" ");
-                    extractedText += `\n[Página ${p}]\n${pageStrings}`;
+                    extractedText += `
+[Página ${p}]
+${pageStrings}`;
                 }
 
                 if (extractedText.trim().length < 40) {
@@ -1921,6 +2171,7 @@ Respeite rigorosamente as quantidades ${targetFc} flashcards e ${targetQz} quest
         function openModal(id) {
             if (id === 'modal-api-settings') {
                 document.getElementById('custom-gemini-key-input').value = localStorage.getItem('epva_prep_custom_gemini_key') || '';
+                document.getElementById('custom-backend-url-input').value = localStorage.getItem('epva_prep_custom_backend_url') || '';
             }
             document.getElementById(id).classList.remove('hidden');
         }
@@ -1939,7 +2190,12 @@ Respeite rigorosamente as quantidades ${targetFc} flashcards e ${targetQz} quest
             }, 3800);
         }
 
-        window.addEventListener('online', updateNetworkStatus);
+        window.addEventListener('online', () => {
+            updateNetworkStatus();
+            if (state.currentUser && state.currentUser.role === 'student') {
+                loadStateWithCloudSync();
+            }
+        });
         window.addEventListener('offline', updateNetworkStatus);
 
         window.onload = async function() {
